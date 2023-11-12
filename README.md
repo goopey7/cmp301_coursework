@@ -1,8 +1,7 @@
-# CMP301_Tessellation
-Starter project for CMP301. Tessellation example.
+# CMP301 COURSEWORK
 
-Name:
+Name: Sam Collier
 
-Number:
+Number: 2100259
 
 Outline of project:
