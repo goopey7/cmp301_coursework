@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Island">
+      <UniqueIdentifier>{6bd2feda-d494-4e68-8964-156a451f5b75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Tesselation">
+      <UniqueIdentifier>{1cf7f94b-cad1-452f-bb81-d03bbf0428f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Water">
+      <UniqueIdentifier>{bace9165-bc5a-4a62-8dd3-5bd432fa24df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App1.cpp">
@@ -21,24 +30,54 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IslandShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TesselatedPlaneMesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IslandShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TesselatedPlaneMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\tessellation_ds.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Tesselation</Filter>
     </FxCompile>
     <FxCompile Include="shaders\tessellation_hs.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Tesselation</Filter>
     </FxCompile>
     <FxCompile Include="shaders\tessellation_ps.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Tesselation</Filter>
     </FxCompile>
     <FxCompile Include="shaders\tessellation_vs.hlsl">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Tesselation</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\islandPS.hlsl">
+      <Filter>Resource Files\Island</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\islandVS.hlsl">
+      <Filter>Resource Files\Island</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\waterPS.hlsl">
+      <Filter>Resource Files\Water</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\waterVS.hlsl">
+      <Filter>Resource Files\Water</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\islandDS.hlsl">
+      <Filter>Resource Files\Island</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\islandHS.hlsl">
+      <Filter>Resource Files\Island</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

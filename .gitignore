@@ -351,3 +351,8 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+Coursework/.cache/clangd/index
+Coursework/compile_commands.json
+Coursework/DXFramework/x64/Debug
+build/.cmake/api/v1/query/client-vim-cmake
+Coursework/DXFramework/x64/Debug

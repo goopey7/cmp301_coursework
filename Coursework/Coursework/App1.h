@@ -4,6 +4,9 @@
 
 // Includes
 #include "DXF.h"	// include dxframework
+#include "IslandShader.h"
+#include "Light.h"
+#include "TesselatedPlaneMesh.h"
 
 class App1 : public BaseApplication
 {
@@ -20,6 +23,13 @@ protected:
 	void gui();
 
 private:
+	TesselatedPlaneMesh* islandMesh;
+	IslandShader* islandShader;
+	float elapsedTime = 0.f;
+	Light* light;
+	float amp = 0.f;
+	float edges[4] = {4.f, 4.f, 4.f, 4.f};
+	float inside[2] = {4.f, 4.f};
 };
 
 #endif
