@@ -174,8 +174,8 @@ void IslandShader::setShaderParameters(
 
 	// Set shader texture resource in the pixel shader.
 	deviceContext->PSSetShaderResources(0, 1, &texture);
+	deviceContext->PSSetShaderResources(1, 1, &normalMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 
 	deviceContext->DSSetShaderResources(0, 1, &heightMap);
-	deviceContext->DSSetShaderResources(1, 1, &normalMap);
 }

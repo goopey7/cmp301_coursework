@@ -18,7 +18,6 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	light = new Light;
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
-	light->setDirection(0.7f, -0.7f, 0.0f);
 }
 
 App1::~App1()
@@ -53,6 +52,7 @@ bool App1::frame()
 		return false;
 	}
 
+	light->setDirection(lightDir[0], lightDir[1], lightDir[2]);
 	elapsedTime += timer->getTime();
 
 	// Render the graphics.
@@ -71,6 +71,7 @@ bool App1::render()
 
 	// Clear the scene. (default blue colour)
 	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
+	//renderer->beginScene(0.f,0.f,0.f,1.f);
 
 	// Generate the view matrix based on the camera's position.
 	camera->update();
@@ -111,6 +112,8 @@ void App1::gui()
 	ImGui::SliderFloat("Amplitude", &amp, 0.f, 100.f);
 	ImGui::SliderFloat4("Edges", edges, 1.f, 64.f);
 	ImGui::SliderFloat2("Inside", inside, 1.f, 64.f);
+
+	ImGui::SliderFloat3("LightDir", lightDir, -1.f, 1.f);
 
 	// Render UI
 	ImGui::Render();
