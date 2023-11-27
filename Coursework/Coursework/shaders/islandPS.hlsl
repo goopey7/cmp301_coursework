@@ -13,6 +13,7 @@ struct InputType
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
     float3 normal : NORMAL;
+    float height : COLOR;
 };
 
 // Calculate lighting intensity based on direction and normal. Combine with light color.
@@ -25,6 +26,10 @@ float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
 
 float4 main(InputType input) : SV_TARGET
 {
+    if (input.height <= 0.5f)
+    {
+        discard;
+    }
     float4 textureColor;
     float4 lightColor;
 

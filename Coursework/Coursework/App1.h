@@ -27,9 +27,9 @@ private:
 	IslandShader* islandShader;
 	float elapsedTime = 0.f;
 	Light* light;
-	float amp = 0.f;
-	float edges[4] = {4.f, 4.f, 4.f, 4.f};
-	float inside[2] = {4.f, 4.f};
+	float amp = 11.f;
+	float edges[4] = {32.f, 32.f, 32.f, 32.f};
+	float inside[2] = {32.f, 32.f};
 };
 
 #endif

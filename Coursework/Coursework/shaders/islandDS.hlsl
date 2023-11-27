@@ -34,6 +34,7 @@ struct OutputType
     float4 position : SV_POSITION;
 	float2 tex : TEXCOORD0;
 	float3 normal : NORMAL;
+    float height : COLOR;
 };
 
 float getHeight(float2 uv)
@@ -64,7 +65,8 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 	float3 n2 = lerp(patch[3].normal, patch[2].normal, uvwCoord.y);
 	float3 normal = lerp(n1, n2, uvwCoord.x);
 
-    vertexPosition.y += getHeight(texCoord) * amplitude;
+    float height = getHeight(texCoord) * amplitude;
+    vertexPosition.y += height;
 
     // Calculate the position of the new vertex against the world, view, and projection matrices.
     output.position = mul(float4(vertexPosition, 1.0f), worldMatrix);
@@ -73,6 +75,8 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 
 	output.tex = texCoord;
 	output.normal = normal;
+
+    output.height = height;
 
     return output;
 }
