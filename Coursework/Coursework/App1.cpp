@@ -15,7 +15,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"islandNormal", L"res/normalAlt.png");
 
 	// Create Mesh object and shader object
-	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 3.f, 0.f, 0.f, 50.f, 50.f);
+	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, 0.f, 0.f, 50.f, 50.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
 
 	light = new Light;
@@ -123,6 +123,8 @@ void App1::gui()
 	ImGui::SliderFloat3("LightDir", lightDir, -1.f, 1.f);
 
 	ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
+
+	ImGui::SliderFloat3("CameraPos", (float*)&camera->getPosition(), -100.f, 100.f);
 
 	// Render UI
 	ImGui::Render();

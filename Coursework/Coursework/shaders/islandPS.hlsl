@@ -35,7 +35,7 @@ float4 main(InputType input) : SV_TARGET
         discard;
     }
 
-    return float4(input.normal, 1.f);
+    //return float4(input.normal, 1.f);
 
     float4 grass = texture0.Sample(sampler0, input.tex * texRes);
     float4 stone = texture1.Sample(sampler0, input.tex * texRes);

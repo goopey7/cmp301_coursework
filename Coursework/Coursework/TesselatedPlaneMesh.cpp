@@ -32,8 +32,8 @@ void TesselatedPlaneMesh::initBuffers(ID3D11Device* device)
 			float xPos = x + i * width / split;
 			float nextXPos = x + (i + 1) * width / split;
 
-			float zPos = z + j * length / split;
-			float nextZPos = z + (j - 1) * length / split;
+			float zPos = z + (split - 1 - j) * length / split;
+			float nextZPos = z + (split - j - 2) * length / split;
 
 			vertices[0].position = XMFLOAT3(xPos, 0.0f, zPos);		 // top left
 			vertices[1].position = XMFLOAT3(xPos, 0.f, nextZPos);					 // bottom left
@@ -41,9 +41,9 @@ void TesselatedPlaneMesh::initBuffers(ID3D11Device* device)
 			vertices[3].position = XMFLOAT3(nextXPos, 0.f, zPos); // top right
 
 			float u = i / split;
-			float v = j / split;
+			float v = (split - j) / split;
 			float u1 = (i + 1) / split;
-			float v1 = (j + 1) / split;
+			float v1 = (split - j - 1) / split;
 			vertices[0].texture = XMFLOAT2(u, v);
 			vertices[1].texture = XMFLOAT2(u, v1);
 			vertices[2].texture = XMFLOAT2(u1, v1);
@@ -54,10 +54,10 @@ void TesselatedPlaneMesh::initBuffers(ID3D11Device* device)
 			vertices[2].normal = XMFLOAT3(0.f, 1.f, 0.f);
 			vertices[3].normal = XMFLOAT3(0.f, 1.f, 0.f);
 
-			indices[0] = 0; // top left
-			indices[1] = 1; // bottom left
-			indices[2] = 2; // bottom right
-			indices[3] = 3; // top right
+			indices[0] = 0;
+			indices[1] = 1;
+			indices[2] = 2;
+			indices[3] = 3;
 
 			vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 			vertexBufferDesc.ByteWidth = sizeof(VertexType) * vertexCount;
