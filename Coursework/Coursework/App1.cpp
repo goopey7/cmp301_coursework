@@ -8,16 +8,19 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Call super/parent init function (required!)
 	BaseApplication::init(hinstance, hwnd, screenWidth, screenHeight, in, VSYNC, FULL_SCREEN);
 
+	textureMgr->loadTexture(L"stone", L"res/stone.jpg");
+	textureMgr->loadTexture(L"grass", L"res/grass.jpg");
 	textureMgr->loadTexture(L"island", L"res/islandHeight.png");
 	textureMgr->loadTexture(L"islandHeight", L"res/islandHeight.png");
-	textureMgr->loadTexture(L"islandNormal", L"res/normal.png");
+	textureMgr->loadTexture(L"islandNormal", L"res/normalAlt.png");
 
 	// Create Mesh object and shader object
-	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 0.f, 0.f, 50.f, 50.f);
+	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 3.f, 0.f, 0.f, 50.f, 50.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
 
 	light = new Light;
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
+	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.f);
 }
 
 App1::~App1()
@@ -82,13 +85,17 @@ bool App1::render()
 	viewMatrix = camera->getViewMatrix();
 	projectionMatrix = renderer->getProjectionMatrix();
 
-	islandMesh->sendData(renderer->getDeviceContext());
-	islandShader->setShaderParameters(
-		renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-		textureMgr->getTexture(L"island"), textureMgr->getTexture(L"islandHeight"),
-		textureMgr->getTexture(L"islandNormal"), elapsedTime, amp, 1.f, 1.f, light, edges, inside);
+	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
+	{
+		islandMesh->sendData(renderer->getDeviceContext(), i);
+		islandShader->setShaderParameters(
+			renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
+			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"),
+			textureMgr->getTexture(L"islandHeight"), textureMgr->getTexture(L"islandNormal"),
+			elapsedTime, amp, 1.f, 1.f, light, edges, inside, texRes);
 
-	islandShader->render(renderer->getDeviceContext(), islandMesh->getIndexCount());
+		islandShader->render(renderer->getDeviceContext(), islandMesh->getIndexCount());
+	}
 
 	// Render GUI
 	gui();
@@ -114,6 +121,8 @@ void App1::gui()
 	ImGui::SliderFloat2("Inside", inside, 1.f, 64.f);
 
 	ImGui::SliderFloat3("LightDir", lightDir, -1.f, 1.f);
+
+	ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
 
 	// Render UI
 	ImGui::Render();

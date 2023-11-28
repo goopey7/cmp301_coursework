@@ -1,18 +1,21 @@
 Texture2D texture0 : register(t0);
-Texture2D normalMap : register(t1);
+Texture2D texture1 : register(t1);
+Texture2D heightMap : register(t2);
 SamplerState sampler0 : register(s0);
 
 cbuffer LightBuffer : register(b0)
 {
     float4 diffuseColor;
     float3 lightDirection;
-    float padding;
+    float texRes;
+    float4 ambientColor;
 };
 
 struct InputType
 {
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
+    float3 normal : NORMAL;
     float height : COLOR;
 };
 
@@ -21,7 +24,7 @@ float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
 {
     float intensity = saturate(dot(normal, lightDirection));
     float4 color = saturate(diffuse * intensity);
-    return color;
+    return color + ambientColor;
 }
 
 float4 main(InputType input) : SV_TARGET
@@ -32,18 +35,16 @@ float4 main(InputType input) : SV_TARGET
         discard;
     }
 
-    float4 textureColor;
-    float4 lightColor;
+    return float4(input.normal, 1.f);
 
-    float3 normal = normalMap.Sample(sampler0, input.tex).rgb;
+    float4 grass = texture0.Sample(sampler0, input.tex * texRes);
+    float4 stone = texture1.Sample(sampler0, input.tex * texRes);
 
-    // normal map encoding is [0,1] but we're using [-1, 1]
-    // so 2(norm) - 1 should do the trick
-    normal = normalize(normal * 2 - 1);
+    float slope = abs(input.normal.y);
 
-	// Sample the texture. Calculate light intensity and color, return light*texture for final pixel color.
-    textureColor = texture0.Sample(sampler0, input.tex);
-    lightColor = calculateLighting(-lightDirection, normal, diffuseColor);
-    return lightColor * textureColor;
-	//return textureColor;
+    float4 terrainColor;
+    terrainColor = lerp(stone, grass, slope);
+
+    float4 lightColor = calculateLighting(-lightDirection, input.normal, diffuseColor);
+    return lightColor * terrainColor;
 }

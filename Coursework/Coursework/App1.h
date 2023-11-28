@@ -31,6 +31,7 @@ private:
 	float edges[4] = {32.f, 32.f, 32.f, 32.f};
 	float inside[2] = {32.f, 32.f};
 	float lightDir[3] = {1.f, 0.8f, 0.25f};
+	float texRes = 15.f;
 };
 
 #endif

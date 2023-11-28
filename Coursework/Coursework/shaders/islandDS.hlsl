@@ -25,7 +25,6 @@ struct InputType
 {
     float3 position : POSITION;
 	float2 tex : TEXCOORD0;
-	float3 normal : NORMAL;
 };
 
 struct OutputType
@@ -46,6 +45,29 @@ float getHeight(float2 uv)
     return heightMap.Load(texCoord);
 }
 
+float3 getNormal(float2 uv)
+{
+    float delta = 0.01f; // Adjust this value as needed for your specific height map
+
+    // Calculate the height at the current UV coordinates
+    float center = getHeight(uv);
+    
+    // Calculate the heights at neighboring texels
+    float left = getHeight(uv - float2(delta, 0));
+    float right = getHeight(uv + float2(delta, 0));
+    float up = getHeight(uv + float2(0, delta));
+    float down = getHeight(uv - float2(0, delta));
+
+    // Calculate the partial derivatives of the height map in the x and y directions
+    float3 dx = float3(delta, 0, right - left);
+    float3 dy = float3(0, delta, up - down);
+
+    // Calculate the cross product of the partial derivatives to obtain the normal
+    float3 normal = normalize(cross(dx, dy));
+
+    return normal;
+}
+
 [domain("quad")]
 OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, const OutputPatch<InputType, 4> patch)
 {
@@ -60,10 +82,6 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     float2 uv2 = lerp(patch[3].tex, patch[2].tex, uvwCoord.y);
     float2 texCoord = lerp(uv1, uv2, uvwCoord.x);
 
-	float3 n1 = lerp(patch[0].normal, patch[1].normal, uvwCoord.y);
-	float3 n2 = lerp(patch[3].normal, patch[2].normal, uvwCoord.y);
-	float3 normal = lerp(n1, n2, uvwCoord.x);
-
     float height = getHeight(texCoord) * amplitude;
     vertexPosition.y += height;
 
@@ -73,9 +91,11 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     output.position = mul(output.position, projectionMatrix);
 
 	output.tex = texCoord;
-	output.normal = normal;
-
     output.height = height;
+
+    float3 recalculatedNormal = getNormal(texCoord);
+
+    output.normal = recalculatedNormal;
 
     return output;
 }

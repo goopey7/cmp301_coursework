@@ -119,9 +119,9 @@ void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_
 
 void IslandShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
-	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture,
+	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1,
 	ID3D11ShaderResourceView* heightMap, ID3D11ShaderResourceView* normalMap, float time, float amp,
-	float freq, float speed, Light* light, float* edges, float* inside)
+	float freq, float speed, Light* light, float* edges, float* inside, float texRes)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -168,13 +168,15 @@ void IslandShader::setShaderParameters(
 	lightPtr = (LightBufferType*)mappedResource.pData;
 	lightPtr->diffuse = light->getDiffuseColour();
 	lightPtr->direction = light->getDirection();
-	lightPtr->padding = 0.0f;
+	lightPtr->texRes = texRes;
+	lightPtr->ambient = light->getAmbientColour();
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
 	// Set shader texture resource in the pixel shader.
-	deviceContext->PSSetShaderResources(0, 1, &texture);
-	deviceContext->PSSetShaderResources(1, 1, &normalMap);
+	deviceContext->PSSetShaderResources(0, 1, &texture0);
+	deviceContext->PSSetShaderResources(1, 1, &texture1);
+	deviceContext->PSSetShaderResources(2, 1, &heightMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 
 	deviceContext->DSSetShaderResources(0, 1, &heightMap);

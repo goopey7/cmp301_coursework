@@ -9,7 +9,6 @@ struct InputType
 {
     float3 position : POSITION;
 	float2 tex : TEXCOORD0;
-	float3 normal : NORMAL;
 };
 
 struct ConstantOutputType
@@ -22,7 +21,6 @@ struct OutputType
 {
     float3 position : POSITION;
 	float2 tex : TEXCOORD0;
-	float3 normal : NORMAL;
 };
 
 ConstantOutputType PatchConstantFunction(InputPatch<InputType, 4> inputPatch, uint patchId : SV_PrimitiveID)
@@ -51,7 +49,6 @@ OutputType main(InputPatch<InputType, 4> patch, uint pointId : SV_OutputControlP
 
     output.position = patch[pointId].position;
     output.tex = patch[pointId].tex;
-	output.normal = patch[pointId].normal;
 
     return output;
 }
