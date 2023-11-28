@@ -45,29 +45,6 @@ float getHeight(float2 uv)
     return heightMap.Load(texCoord);
 }
 
-float3 getNormal(float2 uv)
-{
-    float delta = 0.01f; // Adjust this value as needed for your specific height map
-
-    // Calculate the height at the current UV coordinates
-    float center = getHeight(uv);
-    
-    // Calculate the heights at neighboring texels
-    float left = getHeight(uv - float2(delta, 0));
-    float right = getHeight(uv + float2(delta, 0));
-    float up = getHeight(uv + float2(0, delta));
-    float down = getHeight(uv - float2(0, delta));
-
-    // Calculate the partial derivatives of the height map in the x and y directions
-    float3 dx = float3(delta, 0, right - left);
-    float3 dy = float3(0, delta, up - down);
-
-    // Calculate the cross product of the partial derivatives to obtain the normal
-    float3 normal = normalize(cross(dx, dy));
-
-    return normal;
-}
-
 [domain("quad")]
 OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, const OutputPatch<InputType, 4> patch)
 {
@@ -92,10 +69,6 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 
 	output.tex = texCoord;
     output.height = height;
-
-    float3 recalculatedNormal = getNormal(texCoord);
-
-    output.normal = recalculatedNormal;
 
     return output;
 }
