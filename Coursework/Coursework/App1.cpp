@@ -10,17 +10,20 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	textureMgr->loadTexture(L"stone", L"res/stone.jpg");
 	textureMgr->loadTexture(L"grass", L"res/grass.jpg");
-	textureMgr->loadTexture(L"island", L"res/islandHeight.png");
-	textureMgr->loadTexture(L"islandHeight", L"res/islandHeight.png");
-	textureMgr->loadTexture(L"islandNormal", L"res/normalAlt.png");
+	textureMgr->loadTexture(L"island", L"res/Wizard.tif");
+	textureMgr->loadTexture(L"islandHeight", L"res/Wizard.tif");
 
 	// Create Mesh object and shader object
-	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, 0.f, 0.f, 50.f, 50.f);
+	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, 0.f, 0.f, 100.f, 100.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
+	colorShader = new ColorShader(renderer->getDevice(), hwnd);
+	pointLightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	light = new Light;
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
 	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.f);
+
+	pointLight = new PointLight();
 }
 
 App1::~App1()
@@ -39,10 +42,29 @@ App1::~App1()
 		delete islandShader;
 		islandShader = 0;
 	}
+
+	if (colorShader)
+	{
+		delete colorShader;
+		colorShader = 0;
+	}
+
 	if (light)
 	{
 		delete light;
 		light = 0;
+	}
+
+	if (pointLight)
+	{
+		delete pointLight;
+		pointLight = 0;
+	}
+
+	if (pointLightMesh)
+	{
+		delete pointLightMesh;
+		pointLightMesh = 0;
 	}
 }
 
@@ -56,6 +78,7 @@ bool App1::frame()
 	}
 
 	light->setDirection(lightDir[0], lightDir[1], lightDir[2]);
+	pointLight->setPosition(pointLightPos);
 	elapsedTime += timer->getTime();
 
 	// Render the graphics.
@@ -85,16 +108,24 @@ bool App1::render()
 	viewMatrix = camera->getViewMatrix();
 	projectionMatrix = renderer->getProjectionMatrix();
 
+	auto ctx = renderer->getDeviceContext();
+
+	pointLightMesh->sendData(ctx);
+	worldMatrix *= XMMatrixTranslation(pointLightPos.x, pointLightPos.y, pointLightPos.z);
+	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
+	colorShader->render(ctx, pointLightMesh->getIndexCount());
+
+	worldMatrix = renderer->getWorldMatrix();
 	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
 	{
-		islandMesh->sendData(renderer->getDeviceContext(), i);
+		islandMesh->sendData(ctx, i);
 		islandShader->setShaderParameters(
-			renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
+			ctx, worldMatrix, viewMatrix, projectionMatrix,
 			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"),
-			textureMgr->getTexture(L"islandHeight"), textureMgr->getTexture(L"islandNormal"),
-			elapsedTime, amp, 1.f, 1.f, light, edges, inside, texRes);
+			textureMgr->getTexture(L"islandHeight"), amp, 1.f,
+			1.f, *pointLight, edges, inside, texRes);
 
-		islandShader->render(renderer->getDeviceContext(), islandMesh->getIndexCount());
+		islandShader->render(ctx, islandMesh->getIndexCount());
 	}
 
 	// Render GUI
@@ -125,6 +156,8 @@ void App1::gui()
 	ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
 
 	ImGui::SliderFloat3("CameraPos", (float*)&camera->getPosition(), -100.f, 100.f);
+
+	ImGui::SliderFloat3("PointLightPos", (float*)&pointLightPos, -100.f, 100.f);
 
 	// Render UI
 	ImGui::Render();

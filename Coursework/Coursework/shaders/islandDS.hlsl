@@ -31,8 +31,8 @@ struct OutputType
 {
     float4 position : SV_POSITION;
 	float2 tex : TEXCOORD0;
-	float3 normal : NORMAL;
     float height : COLOR;
+	float3 worldPos : TEXCOORD1;
 };
 
 float getHeight(float2 uv)
@@ -64,11 +64,13 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 
     // Calculate the position of the new vertex against the world, view, and projection matrices.
     output.position = mul(float4(vertexPosition, 1.0f), worldMatrix);
+    output.worldPos = output.position;
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
 
 	output.tex = texCoord;
     output.height = height;
+
 
     return output;
 }

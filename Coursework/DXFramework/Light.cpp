@@ -72,34 +72,34 @@ void Light::setPosition(float x, float y, float z)
 	position = XMVectorSet(x, y, z, 1.0f);
 }
 
-XMFLOAT4 Light::getAmbientColour()
+XMFLOAT4 Light::getAmbientColour() const
 {
 	return ambientColour;
 }
 
-XMFLOAT4 Light::getDiffuseColour()
+XMFLOAT4 Light::getDiffuseColour() const
 {
 	return diffuseColour;
 }
 
 
-XMFLOAT3 Light::getDirection()
+XMFLOAT3 Light::getDirection() const
 {
 	return direction;
 }
 
-XMFLOAT4 Light::getSpecularColour()
+XMFLOAT4 Light::getSpecularColour() const
 {
 	return specularColour;
 }
 
 
-float Light::getSpecularPower()
+float Light::getSpecularPower() const
 {
 	return specularPower;
 }
 
-XMFLOAT3 Light::getPosition()
+XMFLOAT3 Light::getPosition() const
 {
 	XMFLOAT3 temp(XMVectorGetX(position), XMVectorGetY(position), XMVectorGetZ(position));
 	return temp;
@@ -110,17 +110,17 @@ void Light::setLookAt(float x, float y, float z)
 	lookAt = XMVectorSet(x, y, z, 1.0f);
 }
 
-XMMATRIX Light::getViewMatrix()
+XMMATRIX Light::getViewMatrix() const
 {
 	return viewMatrix;
 }
 
-XMMATRIX Light::getProjectionMatrix()
+XMMATRIX Light::getProjectionMatrix() const
 {
 	return projectionMatrix;
 }
 
-XMMATRIX Light::getOrthoMatrix()
+XMMATRIX Light::getOrthoMatrix() const
 {
 	return orthoMatrix;
 }

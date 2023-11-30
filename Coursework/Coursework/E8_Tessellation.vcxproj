@@ -165,13 +165,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App1.cpp" />
+    <ClCompile Include="colorShader.cpp" />
     <ClCompile Include="IslandShader.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="TesselatedPlaneMesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h" />
+    <ClInclude Include="colorShader.h" />
     <ClInclude Include="IslandShader.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="TesselatedPlaneMesh.h" />
   </ItemGroup>
   <ItemGroup>
@@ -180,6 +184,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="colorPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="colorVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="shaders\islandDS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Domain</ShaderType>
     </FxCompile>

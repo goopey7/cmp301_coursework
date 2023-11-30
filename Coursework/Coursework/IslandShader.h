@@ -14,6 +14,10 @@ private:
 		XMFLOAT3 direction;
 		float texRes;
 		XMFLOAT4 ambient;
+		XMFLOAT3 position;
+		uint32_t lightType;
+		float attenuation;
+		XMFLOAT3 padding;
 	};
 
 	struct TimeBufferType
@@ -35,7 +39,7 @@ public:
 	IslandShader(ID3D11Device* device, HWND hwnd);
 	~IslandShader();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1, ID3D11ShaderResourceView * heightMap, ID3D11ShaderResourceView* normalMap, float time, float amp, float freq, float speed, Light* light, float* edges, float* inside, float texRes);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1, ID3D11ShaderResourceView * heightMap, float amp, float freq, float speed, Light* light, float* edges, float* inside, float texRes);
 
 private:
 	void initShader(const wchar_t* vs, const wchar_t* ps);

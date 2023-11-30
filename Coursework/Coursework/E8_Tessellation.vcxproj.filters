@@ -36,6 +36,12 @@
     <ClCompile Include="TesselatedPlaneMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PointLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="colorShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h">
@@ -45,6 +51,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TesselatedPlaneMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="colorShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -78,6 +90,12 @@
     </FxCompile>
     <FxCompile Include="shaders\islandHS.hlsl">
       <Filter>Resource Files\Island</Filter>
+    </FxCompile>
+    <FxCompile Include="colorPS.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="colorVS.hlsl">
+      <Filter>Resource Files</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

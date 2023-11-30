@@ -120,7 +120,7 @@ void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_
 void IslandShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1,
-	ID3D11ShaderResourceView* heightMap, ID3D11ShaderResourceView* normalMap, float time, float amp,
+	ID3D11ShaderResourceView* heightMap, float amp,
 	float freq, float speed, Light* light, float* edges, float* inside, float texRes)
 {
 	HRESULT result;
@@ -144,7 +144,7 @@ void IslandShader::setShaderParameters(
 	TimeBufferType* timeData;
 	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	timeData = (TimeBufferType*)mappedResource.pData;
-	timeData->time = time;
+	timeData->time = 0.f;
 	timeData->amplitude = amp;
 	timeData->frequency = freq;
 	timeData->speed = speed;
@@ -166,10 +166,13 @@ void IslandShader::setShaderParameters(
 	LightBufferType* lightPtr;
 	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	lightPtr = (LightBufferType*)mappedResource.pData;
+	lightPtr->lightType = 1;
 	lightPtr->diffuse = light->getDiffuseColour();
 	lightPtr->direction = light->getDirection();
+	lightPtr->position = light->getPosition();
 	lightPtr->texRes = texRes;
 	lightPtr->ambient = light->getAmbientColour();
+	lightPtr->attenuation = 10.f;
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 

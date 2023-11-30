@@ -44,15 +44,15 @@ public:
 	void setLookAt(float x, float y, float z);									///< Set light lookAt (near deprecation)
 
 	// Getters
-	XMFLOAT4 getAmbientColour();		///< Get ambient colour, returns float4
-	XMFLOAT4 getDiffuseColour();		///< Get diffuse colour, returns float4
-	XMFLOAT3 getDirection();			///< Get light direction, returns float3
-	XMFLOAT4 getSpecularColour();		///< Get specular colour, returns float4
-	float getSpecularPower();			///< Get specular power, returns float
-	XMFLOAT3 getPosition();				///< Get light position, returns float3
-	XMMATRIX getViewMatrix();			///< Get light view matrix for shadow mapping, returns XMMATRIX
-	XMMATRIX getProjectionMatrix();		///< Get light projection matrix for shadow mapping, returns XMMATRIX
-	XMMATRIX getOrthoMatrix();			///< Get light orthographic matrix for shadow mapping, returns XMMATRIX
+	XMFLOAT4 getAmbientColour() const;		///< Get ambient colour, returns float4
+	XMFLOAT4 getDiffuseColour() const;		///< Get diffuse colour, returns float4
+	XMFLOAT3 getDirection() const;			///< Get light direction, returns float3
+	XMFLOAT4 getSpecularColour() const;		///< Get specular colour, returns float4
+	float getSpecularPower() const;			///< Get specular power, returns float
+	XMFLOAT3 getPosition() const;				///< Get light position, returns float3
+	XMMATRIX getViewMatrix() const;			///< Get light view matrix for shadow mapping, returns XMMATRIX
+	XMMATRIX getProjectionMatrix() const;		///< Get light projection matrix for shadow mapping, returns XMMATRIX
+	XMMATRIX getOrthoMatrix() const;			///< Get light orthographic matrix for shadow mapping, returns XMMATRIX
 
 
 protected:
