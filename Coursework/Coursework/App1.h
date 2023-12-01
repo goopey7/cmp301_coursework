@@ -5,6 +5,7 @@
 // Includes
 #include "DXF.h"	// include dxframework
 #include "IslandShader.h"
+#include "WaterShader.h"
 #include "colorShader.h"
 #include "Light.h"
 #include "TesselatedPlaneMesh.h"
@@ -26,7 +27,9 @@ protected:
 
 private:
 	TesselatedPlaneMesh* islandMesh;
+	TesselatedPlaneMesh* waterMesh;
 	IslandShader* islandShader;
+	WaterShader* waterShader;
 	ColorShader* colorShader;
 	float elapsedTime = 0.f;
 	Light* light;

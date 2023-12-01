@@ -42,6 +42,9 @@
     <ClCompile Include="colorShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WaterShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h">
@@ -57,6 +60,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="colorShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WaterShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -79,12 +85,6 @@
     <FxCompile Include="shaders\islandVS.hlsl">
       <Filter>Resource Files\Island</Filter>
     </FxCompile>
-    <FxCompile Include="shaders\waterPS.hlsl">
-      <Filter>Resource Files\Water</Filter>
-    </FxCompile>
-    <FxCompile Include="shaders\waterVS.hlsl">
-      <Filter>Resource Files\Water</Filter>
-    </FxCompile>
     <FxCompile Include="shaders\islandDS.hlsl">
       <Filter>Resource Files\Island</Filter>
     </FxCompile>
@@ -96,6 +96,18 @@
     </FxCompile>
     <FxCompile Include="colorVS.hlsl">
       <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\waterHS.hlsl">
+      <Filter>Resource Files\Water</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\waterPS.hlsl">
+      <Filter>Resource Files\Water</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\waterVS.hlsl">
+      <Filter>Resource Files\Water</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\waterDS.hlsl">
+      <Filter>Resource Files\Water</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

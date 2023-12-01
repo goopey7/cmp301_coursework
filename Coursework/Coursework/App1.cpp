@@ -16,6 +16,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Create Mesh object and shader object
 	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, 0.f, 0.f, 100.f, 100.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
+	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
+	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
 	pointLightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
@@ -37,10 +39,23 @@ App1::~App1()
 		delete islandMesh;
 		islandMesh = 0;
 	}
+
+	if (waterMesh)
+	{
+		delete waterMesh;
+		waterMesh = 0;
+	}
+
 	if (islandShader)
 	{
 		delete islandShader;
 		islandShader = 0;
+	}
+
+	if (waterShader)
+	{
+		delete waterShader;
+		waterShader = 0;
 	}
 
 	if (colorShader)
@@ -114,6 +129,15 @@ bool App1::render()
 	worldMatrix *= XMMatrixTranslation(pointLightPos.x, pointLightPos.y, pointLightPos.z);
 	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
 	colorShader->render(ctx, pointLightMesh->getIndexCount());
+
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
+	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
+	{
+		waterMesh->sendData(ctx, i);
+		waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges, inside);
+		waterShader->render(ctx, waterMesh->getIndexCount());
+	}
 
 	worldMatrix = renderer->getWorldMatrix();
 	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
