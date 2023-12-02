@@ -31,17 +31,28 @@ private:
 	IslandShader* islandShader;
 	WaterShader* waterShader;
 	ColorShader* colorShader;
-	float elapsedTime = 0.f;
 	Light* light;
-	float amp = 60.f;
-	float edges[4] = {32.f, 32.f, 32.f, 32.f};
-	float inside[2] = {32.f, 32.f};
-	float lightDir[3] = {1.f, 0.8f, 0.25f};
+	PointLight* pointLight;
+	SphereMesh* pointLightMesh;
+
+	// island variables
+	float islandHeight = 60.f;
 	float texRes = 15.f;
 
-	PointLight* pointLight;
+	// water variables
+	float waterSpeed = 0.2f;
+	float waterAmp = 0.6f;
+	float waterFreq = 0.5f;
+
+	// universal tesselation variables
+	float edges[4] = {32.f, 32.f, 32.f, 32.f};
+	float inside[2] = {32.f, 32.f};
+
+	// light variables
+	float lightDir[3] = {1.f, 0.8f, 0.25f};
 	XMFLOAT3 pointLightPos = { 27.f, 7.f, 21.f };
-	SphereMesh* pointLightMesh;
+
+	float elapsedTime = 0.f;
 };
 
 #endif

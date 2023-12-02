@@ -12,6 +12,9 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"grass", L"res/grass.jpg");
 	textureMgr->loadTexture(L"island", L"res/Wizard.tif");
 	textureMgr->loadTexture(L"islandHeight", L"res/Wizard.tif");
+	textureMgr->loadTexture(L"waterColor", L"res/Water_001_COLOR.jpg");
+	textureMgr->loadTexture(L"waterNormal", L"res/Water_001_NORM.jpg");
+	textureMgr->loadTexture(L"waterHeight", L"res/Water_001_DISP.png");
 
 	// Create Mesh object and shader object
 	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, 0.f, 0.f, 100.f, 100.f);
@@ -135,7 +138,19 @@ bool App1::render()
 	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
 	{
 		waterMesh->sendData(ctx, i);
-		waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges, inside);
+
+		waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix,
+			edges,
+			inside,
+			elapsedTime,
+			waterSpeed,
+			waterAmp, 
+			waterFreq,
+			textureMgr->getTexture(L"waterColor"),
+			textureMgr->getTexture(L"waterNormal"),
+			textureMgr->getTexture(L"waterHeight")
+		);
+
 		waterShader->render(ctx, waterMesh->getIndexCount());
 	}
 
@@ -146,8 +161,9 @@ bool App1::render()
 		islandShader->setShaderParameters(
 			ctx, worldMatrix, viewMatrix, projectionMatrix,
 			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"),
-			textureMgr->getTexture(L"islandHeight"), amp, 1.f,
-			1.f, *pointLight, edges, inside, texRes);
+			textureMgr->getTexture(L"islandHeight"),
+			*pointLight, edges, inside, texRes, islandHeight
+		);
 
 		islandShader->render(ctx, islandMesh->getIndexCount());
 	}
@@ -171,17 +187,25 @@ void App1::gui()
 	// Build UI
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
-	ImGui::SliderFloat("Amplitude", &amp, 0.f, 100.f);
 	ImGui::SliderFloat4("Edges", edges, 1.f, 64.f);
 	ImGui::SliderFloat2("Inside", inside, 1.f, 64.f);
-
-	ImGui::SliderFloat3("LightDir", lightDir, -1.f, 1.f);
-
 	ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
+	ImGui::DragFloat3("CameraPos", (float*)&camera->getPosition(), -100.f, 100.f);
 
-	ImGui::SliderFloat3("CameraPos", (float*)&camera->getPosition(), -100.f, 100.f);
+	ImGui::Begin("Lighting");
+		ImGui::SliderFloat3("LightDir", lightDir, -1.f, 1.f);
+		ImGui::SliderFloat3("PointLightPos", (float*)&pointLightPos, -100.f, 100.f);
+	ImGui::End();
 
-	ImGui::SliderFloat3("PointLightPos", (float*)&pointLightPos, -100.f, 100.f);
+	ImGui::Begin("Island");
+		ImGui::SliderFloat("IslandHeight", &islandHeight, 0.f, 100.f);
+	ImGui::End();
+
+	ImGui::Begin("Water");
+		ImGui::SliderFloat("Speed", &waterSpeed, 0.f, 0.5f);
+		ImGui::SliderFloat("Frequency", &waterFreq, 0.f, 10.f);
+		ImGui::SliderFloat("WaterAmplitude", &waterAmp, 0.f, 10.f);
+	ImGui::End();
 
 	// Render UI
 	ImGui::Render();

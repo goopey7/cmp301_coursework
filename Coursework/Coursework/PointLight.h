@@ -10,5 +10,5 @@ class PointLight
 	operator Light*() { return &light; }
   private:
 	Light light;
-	float attenuation = 10.0f;
+	float attenuation = 100.0f;
 };

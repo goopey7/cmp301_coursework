@@ -1,9 +1,19 @@
+Texture2D heightMap : register(t0);
+
 cbuffer MatrixBuffer : register(b0)
 {
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
 };
+
+cbuffer TimeBuffer : register(b1)
+{
+    float time;
+    float amp;
+    float freq;
+    float speed;
+}
 
 struct ConstantOutputType
 {
@@ -22,7 +32,23 @@ struct OutputType
     float4 position : SV_POSITION;
 	float2 tex : TEXCOORD0;
 	float3 worldPos : TEXCOORD1;
+    float3 worldNormal : TEXCOORD2;
+    float3 worldTangent : TEXCOORD3;
+    float3 worldBitangent : TEXCOORD4;
 };
+
+float getHeight(float2 uv)
+{
+    int width, height;
+    heightMap.GetDimensions(width, height);
+
+    uv = frac(uv);
+    uv -= floor(uv);
+
+    int3 texCoord = int3(uv * int2(width, height), 0);
+
+    return heightMap.Load(texCoord);
+}
 
 [domain("quad")]
 OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, const OutputPatch<InputType, 4> patch)
@@ -38,6 +64,10 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     float2 uv2 = lerp(patch[3].tex, patch[2].tex, uvwCoord.y);
     float2 texCoord = lerp(uv1, uv2, uvwCoord.x);
 
+    texCoord = 25.f * texCoord + float2(-time * speed, -time * speed);
+    float height = getHeight(texCoord) * amp;
+    vertexPosition.y += height;
+
     // Calculate the position of the new vertex against the world, view, and projection matrices.
     output.position = mul(float4(vertexPosition, 1.0f), worldMatrix);
     output.worldPos = output.position;
@@ -45,6 +75,14 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     output.position = mul(output.position, projectionMatrix);
 
 	output.tex = texCoord;
+
+    output.worldNormal = float3(0, 1, 0);
+    output.worldTangent = float3(1, 0, 0);
+    output.worldBitangent = float3(0, 0, 1);
+
+    output.worldNormal = normalize(mul(float4(output.worldNormal, 1.f), worldMatrix));
+    output.worldTangent = normalize(mul(float4(output.worldTangent, 1.f), worldMatrix));
+    output.worldBitangent = normalize(mul(float4(output.worldBitangent, 1.f), worldMatrix));
 
     return output;
 }

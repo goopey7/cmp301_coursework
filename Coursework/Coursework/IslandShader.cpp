@@ -1,4 +1,5 @@
 #include "IslandShader.h"
+#include "ShaderBuffers.h"
 
 IslandShader::IslandShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
@@ -120,8 +121,8 @@ void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_
 void IslandShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1,
-	ID3D11ShaderResourceView* heightMap, float amp,
-	float freq, float speed, Light* light, float* edges, float* inside, float texRes)
+	ID3D11ShaderResourceView* heightMap,
+	Light* light, float* edges, float* inside, float texRes, float height)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -144,10 +145,10 @@ void IslandShader::setShaderParameters(
 	TimeBufferType* timeData;
 	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	timeData = (TimeBufferType*)mappedResource.pData;
+	timeData->amplitude = height;
 	timeData->time = 0.f;
-	timeData->amplitude = amp;
-	timeData->frequency = freq;
-	timeData->speed = speed;
+	timeData->frequency = 0.f;
+	timeData->speed = 0.f;
 	deviceContext->Unmap(timeBuffer, 0);
 	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
 

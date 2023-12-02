@@ -1,4 +1,5 @@
 #include "WaterShader.h"
+#include "ShaderBuffers.h"
 
 WaterShader::WaterShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
@@ -118,8 +119,11 @@ void WaterShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_t
 }
 
 void WaterShader::setShaderParameters(
-	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
-	const XMMATRIX& projectionMatrix, float* edges, float* inside)
+ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
+							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
+							 float* edges, float* inside, float time, float speed, float amp, float freq,
+		ID3D11ShaderResourceView* color, ID3D11ShaderResourceView* normal, ID3D11ShaderResourceView* height
+)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -139,6 +143,17 @@ void WaterShader::setShaderParameters(
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
+	TimeBufferType* timeData;
+	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	timeData = (TimeBufferType*)mappedResource.pData;
+	timeData->time = time;
+	timeData->amplitude = amp;
+	timeData->frequency = freq;
+	timeData->speed = speed;
+	deviceContext->Unmap(timeBuffer, 0);
+	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
+	deviceContext->PSSetConstantBuffers(1, 1, &timeBuffer);
+
 	TesType* tesData;
 	result = deviceContext->Map(tesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	tesData = (TesType*)mappedResource.pData;
@@ -147,6 +162,12 @@ void WaterShader::setShaderParameters(
 	tesData->padding = {0.0f, 0.0f};
 	deviceContext->Unmap(tesBuffer, 0);
 	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
+
+	// Set shader texture resources
+	deviceContext->PSSetShaderResources(0, 1, &color);
+	deviceContext->PSSetShaderResources(1, 1, &normal);
+	deviceContext->PSSetSamplers(0, 1, &sampleState);
+	deviceContext->DSSetShaderResources(0, 1, &height);
 
 	/*
 	// Additional
@@ -164,9 +185,6 @@ void WaterShader::setShaderParameters(
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 	*/
-
-	// Set shader texture resource in the pixel shader.
-	//deviceContext->PSSetSamplers(0, 1, &sampleState);
 
 	//deviceContext->DSSetShaderResources(0, 1, &heightMap);
 }

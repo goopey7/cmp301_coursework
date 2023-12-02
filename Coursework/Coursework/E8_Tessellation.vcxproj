@@ -177,6 +177,7 @@
     <ClInclude Include="colorShader.h" />
     <ClInclude Include="IslandShader.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="ShaderBuffers.h" />
     <ClInclude Include="TesselatedPlaneMesh.h" />
     <ClInclude Include="WaterShader.h" />
   </ItemGroup>

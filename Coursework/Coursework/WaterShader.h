@@ -1,46 +1,19 @@
 #pragma once
 
 #include "DXF.h"
-
 using namespace std;
 using namespace DirectX;
 
 class WaterShader : public BaseShader
 {
-  private:
-	struct LightBufferType
-	{
-		XMFLOAT4 diffuse;
-		XMFLOAT3 direction;
-		float texRes;
-		XMFLOAT4 ambient;
-		XMFLOAT3 position;
-		uint32_t lightType;
-		float attenuation;
-		XMFLOAT3 padding;
-	};
-
-	struct TimeBufferType
-	{
-		float time;
-		float amplitude;
-		float frequency;
-		float speed;
-	};
-
-	struct TesType
-	{
-		XMFLOAT4 edges;
-		XMFLOAT2 inside;
-		XMFLOAT2 padding;
-	};
-
   public:
 	WaterShader(ID3D11Device* device, HWND hwnd);
 	~WaterShader();
 
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
-							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, float* edges, float* inside);
+							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
+							 float* edges, float* inside, float time, float speed, float amp, float freq,
+		ID3D11ShaderResourceView* color, ID3D11ShaderResourceView* normal, ID3D11ShaderResourceView* height);
 
   private:
 	void initShader(const wchar_t* vs, const wchar_t* ps);
