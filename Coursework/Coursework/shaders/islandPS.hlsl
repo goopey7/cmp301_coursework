@@ -3,16 +3,27 @@ Texture2D texture1 : register(t1);
 Texture2D heightMap : register(t2);
 SamplerState sampler0 : register(s0);
 
-cbuffer LightBuffer : register(b0)
+struct Light
 {
     float4 diffuseColor;
     float3 lightDirection;
-    float texRes;
+    uint type;
     float4 ambientColor;
     float3 lightPosition;
-    uint1 type;
     float attenuation;
-    float3 padding;
+};
+
+cbuffer LightBuffer : register(b0)
+{
+    Light lights[8];
+    uint numLights;
+    float3 padding0;
+};
+
+cbuffer TexResBuffer : register(b1)
+{
+    float texRes;
+    float3 padding1;
 };
 
 struct InputType
@@ -76,20 +87,24 @@ float4 main(InputType input) : SV_TARGET
     float4 terrainColor;
     terrainColor = lerp(stone, grass, slope);
 
-    float4 lightColor;
-    if (type == 0)
+    float4 pointLightColor = float4(0.f, 0.f, 0.f, 1.f);
+    float4 dirLightColor = float4(0.f, 0.f, 0.f, 1.f);
+    for (uint i = 0; i < numLights; i++)
     {
-        lightColor = calculateLighting(-lightDirection, normal, diffuseColor) + ambientColor;
-    }
-    else
-    {
-        // divide by 2 because I want attenuation to represent the max distance from the center of the light
-        float distance = length(lightPosition - input.worldPos) / 2.f;
+        Light light = lights[i];
+        if (light.type == 0)
+        {
+            dirLightColor += calculateLighting(-light.lightDirection, normal, light.diffuseColor);
+        }
+        else
+        {
+            // divide by 2 because I want attenuation to represent the max distance from the center of the light
+            float distance = length(light.lightPosition - input.worldPos) / 2.f;
 
-        // gradual quadratic falloff depending on distance from the light
-        float att = pow(saturate(1.0 - pow(distance / attenuation, 2)), 2);
-        lightColor = att * calculateLighting(normalize(lightPosition - input.worldPos), normal, diffuseColor);
-        lightColor += ambientColor;
+            // gradual quadratic falloff depending on distance from the light
+            float att = pow(saturate(1.0 - pow(distance / 5.f, 2)), 2);
+            pointLightColor += att * calculateLighting(normalize(light.lightPosition - input.worldPos), normal, light.diffuseColor);
+        }
     }
-    return lightColor * terrainColor;
+    return (dirLightColor + pointLightColor) * terrainColor;
 }

@@ -10,6 +10,7 @@
 #include "Light.h"
 #include "TesselatedPlaneMesh.h"
 #include "PointLight.h"
+#include "DirectionLight.h"
 
 class App1 : public BaseApplication
 {
@@ -31,9 +32,9 @@ private:
 	IslandShader* islandShader;
 	WaterShader* waterShader;
 	ColorShader* colorShader;
-	Light* light;
-	PointLight* pointLight;
-	SphereMesh* pointLightMesh;
+
+	std::vector<LightBase*> lights;
+	std::vector<SphereMesh*> lightMeshes;
 
 	// island variables
 	float islandHeight = 60.f;

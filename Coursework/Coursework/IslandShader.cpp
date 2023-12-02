@@ -1,5 +1,6 @@
 #include "IslandShader.h"
 #include "ShaderBuffers.h"
+#include <array>
 
 IslandShader::IslandShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
@@ -54,6 +55,7 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	D3D11_BUFFER_DESC lightBufferDesc;
 	D3D11_BUFFER_DESC timeBufferDesc;
 	D3D11_BUFFER_DESC tesBufferDesc;
+	D3D11_BUFFER_DESC texResBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
@@ -84,6 +86,14 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	tesBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&tesBufferDesc, NULL, &tesBuffer);
 
+	texResBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	texResBufferDesc.ByteWidth = sizeof(TexResBufferType);
+	texResBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	texResBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	texResBufferDesc.MiscFlags = 0;
+	texResBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&texResBufferDesc, NULL, &texResBuffer);
+
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -101,12 +111,16 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	// Note that ByteWidth always needs to be a multiple of 16 if using D3D11_BIND_CONSTANT_BUFFER
 	// or CreateBuffer will fail.
 	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	lightBufferDesc.ByteWidth = sizeof(LightBufferType);
+	lightBufferDesc.ByteWidth = sizeof(LightBufferType) * 8 + sizeof(uint32_t) * 4;
 	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	lightBufferDesc.MiscFlags = 0;
 	lightBufferDesc.StructureByteStride = 0;
-	renderer->CreateBuffer(&lightBufferDesc, NULL, &lightBuffer);
+	HRESULT result = renderer->CreateBuffer(&lightBufferDesc, NULL, &lightBuffer);
+	if (FAILED(result))
+	{
+		throw std::runtime_error("Failed to create light buffer");
+	}
 }
 
 void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_t* ds,
@@ -122,7 +136,7 @@ void IslandShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1,
 	ID3D11ShaderResourceView* heightMap,
-	Light* light, float* edges, float* inside, float texRes, float height)
+	const std::vector<LightBase*>& lights, float* edges, float* inside, float texRes, float height)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -161,19 +175,28 @@ void IslandShader::setShaderParameters(
 	deviceContext->Unmap(tesBuffer, 0);
 	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
 
-	// Additional
-	//  Send light data to pixel shader
+	TexResBufferType* texResData;
+	result = deviceContext->Map(texResBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	texResData = (TexResBufferType*)mappedResource.pData;
+	texResData->texRes = texRes;
+	texResData->padding = {0.0f, 0.0f, 0.f};
+	deviceContext->Unmap(texResBuffer, 0);
+	deviceContext->PSSetConstantBuffers(1, 1, &texResBuffer);
 
-	LightBufferType* lightPtr;
-	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	lightPtr = (LightBufferType*)mappedResource.pData;
-	lightPtr->lightType = 1;
-	lightPtr->diffuse = light->getDiffuseColour();
-	lightPtr->direction = light->getDirection();
-	lightPtr->position = light->getPosition();
-	lightPtr->texRes = texRes;
-	lightPtr->ambient = light->getAmbientColour();
-	lightPtr->attenuation = 10.f;
+	// Additional
+	// Send light data to pixel shader
+
+	std::vector<LightBufferType> ldata;
+	for (auto& light : lights)
+	{
+		ldata.push_back(light->getConstBuffer());
+	}
+
+	LightsBufferType* lightsPtr;
+	result = deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	lightsPtr = (LightsBufferType*)mappedResource.pData;
+	std::move(ldata.begin(), ldata.begin() + min(ldata.size(), 8), lightsPtr->lights);
+	lightsPtr->lightCount = min(ldata.size(), 8);
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 

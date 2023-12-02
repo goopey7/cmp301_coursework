@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DXF.h"
+#include "LightBase.h"
 using namespace std;
 using namespace DirectX;
 

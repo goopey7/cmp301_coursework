@@ -22,13 +22,13 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
 	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
-	pointLightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
+	//pointLightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
-	light = new Light;
-	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
-	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.f);
+	PointLight* pointLight = new PointLight();
+	DirectionLight* dirLight = new DirectionLight();
 
-	pointLight = new PointLight();
+	lights.push_back(dirLight);
+	lights.push_back(pointLight);
 }
 
 App1::~App1()
@@ -67,22 +67,13 @@ App1::~App1()
 		colorShader = 0;
 	}
 
-	if (light)
+	for (auto light : lights)
 	{
-		delete light;
-		light = 0;
-	}
-
-	if (pointLight)
-	{
-		delete pointLight;
-		pointLight = 0;
-	}
-
-	if (pointLightMesh)
-	{
-		delete pointLightMesh;
-		pointLightMesh = 0;
+		if (light)
+		{
+			delete light;
+			light = 0;
+		}
 	}
 }
 
@@ -95,8 +86,8 @@ bool App1::frame()
 		return false;
 	}
 
-	light->setDirection(lightDir[0], lightDir[1], lightDir[2]);
-	pointLight->setPosition(pointLightPos);
+	((DirectionLight*)lights[0])->setDirection((XMFLOAT3)lightDir);
+	((PointLight*)lights[1])->setPosition(pointLightPos);
 	elapsedTime += timer->getTime();
 
 	// Render the graphics.
@@ -128,11 +119,14 @@ bool App1::render()
 
 	auto ctx = renderer->getDeviceContext();
 
+	/*
 	pointLightMesh->sendData(ctx);
 	worldMatrix *= XMMatrixTranslation(pointLightPos.x, pointLightPos.y, pointLightPos.z);
 	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
 	colorShader->render(ctx, pointLightMesh->getIndexCount());
+	*/
 
+	/*
 	worldMatrix = renderer->getWorldMatrix();
 	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
@@ -153,6 +147,7 @@ bool App1::render()
 
 		waterShader->render(ctx, waterMesh->getIndexCount());
 	}
+	*/
 
 	worldMatrix = renderer->getWorldMatrix();
 	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
@@ -162,7 +157,7 @@ bool App1::render()
 			ctx, worldMatrix, viewMatrix, projectionMatrix,
 			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"),
 			textureMgr->getTexture(L"islandHeight"),
-			*pointLight, edges, inside, texRes, islandHeight
+			lights, edges, inside, texRes, islandHeight
 		);
 
 		islandShader->render(ctx, islandMesh->getIndexCount());

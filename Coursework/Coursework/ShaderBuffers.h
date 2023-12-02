@@ -8,12 +8,17 @@ struct LightBufferType
 {
 	XMFLOAT4 diffuse;
 	XMFLOAT3 direction;
-	float texRes;
+	uint32_t lightType;
 	XMFLOAT4 ambient;
 	XMFLOAT3 position;
-	uint32_t lightType;
 	float attenuation;
-	XMFLOAT3 padding;
+};
+
+struct LightsBufferType
+{
+	LightBufferType lights[8];
+	uint32_t lightCount;
+	XMUINT3 padding;
 };
 
 struct TimeBufferType
@@ -29,4 +34,10 @@ struct TesType
 	XMFLOAT4 edges;
 	XMFLOAT2 inside;
 	XMFLOAT2 padding;
+};
+
+struct TexResBufferType
+{
+	float texRes;
+	XMFLOAT3 padding;
 };
