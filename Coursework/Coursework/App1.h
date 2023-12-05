@@ -21,9 +21,12 @@ public:
 	void init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeight, Input* in, bool VSYNC, bool FULL_SCREEN);
 
 	bool frame();
+	void update(float dt);
 
 protected:
 	bool render();
+	void finalPass();
+	void depthPass();
 	void gui();
 
 private:
@@ -32,6 +35,8 @@ private:
 	IslandShader* islandShader;
 	WaterShader* waterShader;
 	ColorShader* colorShader;
+
+	ShadowMap* shadowMap;
 
 	std::vector<LightBase*> lights;
 	std::vector<SphereMesh*> lightMeshes;

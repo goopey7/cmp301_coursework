@@ -26,9 +26,13 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	PointLight* pointLight = new PointLight();
 	DirectionLight* dirLight = new DirectionLight();
+	dirLight->setDirection((XMFLOAT3)lightDir);
+	dirLight->setPosition((XMFLOAT3)pointLightPos);
 
 	lights.push_back(dirLight);
-	lights.push_back(pointLight);
+	//lights.push_back(pointLight);
+
+	shadowMap = new ShadowMap(renderer->getDevice(), 1024 * 5, 1024 * 5);
 }
 
 App1::~App1()
@@ -86,9 +90,7 @@ bool App1::frame()
 		return false;
 	}
 
-	((DirectionLight*)lights[0])->setDirection((XMFLOAT3)lightDir);
-	((PointLight*)lights[1])->setPosition(pointLightPos);
-	elapsedTime += timer->getTime();
+	update(timer->getTime());
 
 	// Render the graphics.
 	result = render();
@@ -100,24 +102,42 @@ bool App1::frame()
 	return true;
 }
 
-bool App1::render()
+void App1::update(float dt)
 {
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
-
-	// Clear the scene. (default blue colour)
-	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
-	//renderer->beginScene(0.f,0.f,0.f,1.f);
+	((DirectionLight*)lights[0])->setDirection((XMFLOAT3)lightDir);
+	((DirectionLight*)lights[0])->setPosition(pointLightPos);
+	elapsedTime += timer->getTime();
 
 	// Generate the view matrix based on the camera's position.
 	camera->update();
+}
 
-	// Get the world, view, projection, and ortho matrices from the camera and
-	// Direct3D objects.
-	worldMatrix = renderer->getWorldMatrix();
-	viewMatrix = camera->getViewMatrix();
-	projectionMatrix = renderer->getProjectionMatrix();
+void App1::depthPass()
+{
+	// Set the render target to be the render to texture.
+	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
+
+	lights[0]->generateViewMatrix();
+	XMMATRIX lightViewMat = lights[0]->getViewMatrix();
+	XMMATRIX lightProjMat = lights[0]->getOrthoMatrix();
+	XMMATRIX worldMat = renderer->getWorldMatrix();
 
 	auto ctx = renderer->getDeviceContext();
+
+	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
+	{
+		islandMesh->sendData(ctx, i);
+		islandShader->setDepthShaderParameters(
+			ctx, worldMat, lightViewMat, lightProjMat,
+			textureMgr->getTexture(L"islandHeight"),
+			edges, inside, islandHeight
+		);
+
+		islandShader->renderDepth(ctx, islandMesh->getIndexCount());
+	}
+
+	renderer->setBackBufferRenderTarget();
+	renderer->resetViewport();
 
 	/*
 	pointLightMesh->sendData(ctx);
@@ -125,7 +145,6 @@ bool App1::render()
 	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
 	colorShader->render(ctx, pointLightMesh->getIndexCount());
 	*/
-
 	/*
 	worldMatrix = renderer->getWorldMatrix();
 	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
@@ -148,8 +167,24 @@ bool App1::render()
 		waterShader->render(ctx, waterMesh->getIndexCount());
 	}
 	*/
+}
 
+void App1::finalPass()
+{
+	// Clear the scene. (default blue colour)
+	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
+	//renderer->beginScene(0.f,0.f,0.f,1.f);
+
+	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
+
+	// Get the world, view, projection, and ortho matrices from the camera and
+	// Direct3D objects.
 	worldMatrix = renderer->getWorldMatrix();
+	viewMatrix = camera->getViewMatrix();
+	projectionMatrix = renderer->getProjectionMatrix();
+
+	auto ctx = renderer->getDeviceContext();
+
 	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
 	{
 		islandMesh->sendData(ctx, i);
@@ -162,6 +197,40 @@ bool App1::render()
 
 		islandShader->render(ctx, islandMesh->getIndexCount());
 	}
+	/*
+	pointLightMesh->sendData(ctx);
+	worldMatrix *= XMMatrixTranslation(pointLightPos.x, pointLightPos.y, pointLightPos.z);
+	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
+	colorShader->render(ctx, pointLightMesh->getIndexCount());
+	*/
+	/*
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
+	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
+	{
+		waterMesh->sendData(ctx, i);
+
+		waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix,
+			edges,
+			inside,
+			elapsedTime,
+			waterSpeed,
+			waterAmp, 
+			waterFreq,
+			textureMgr->getTexture(L"waterColor"),
+			textureMgr->getTexture(L"waterNormal"),
+			textureMgr->getTexture(L"waterHeight")
+		);
+
+		waterShader->render(ctx, waterMesh->getIndexCount());
+	}
+	*/
+}
+
+bool App1::render()
+{
+	depthPass();
+	finalPass();
 
 	// Render GUI
 	gui();
@@ -200,6 +269,10 @@ void App1::gui()
 		ImGui::SliderFloat("Speed", &waterSpeed, 0.f, 0.5f);
 		ImGui::SliderFloat("Frequency", &waterFreq, 0.f, 10.f);
 		ImGui::SliderFloat("WaterAmplitude", &waterAmp, 0.f, 10.f);
+	ImGui::End();
+
+	ImGui::Begin("ShadowMap");
+		ImGui::Image(shadowMap->getDepthMapSRV(), ImVec2(256, 256));
 	ImGui::End();
 
 	// Render UI

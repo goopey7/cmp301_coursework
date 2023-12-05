@@ -286,6 +286,49 @@ void BaseShader::loadPixelShader(const wchar_t* filename)
 	pixelShaderBuffer = 0;
 }
 
+void BaseShader::loadDepthPixelShader(const wchar_t* filename)
+{
+	ID3DBlob* pixelShaderBuffer;
+
+	// check file extension for correct loading function.
+	std::wstring fn(filename);
+	std::string::size_type idx;
+	std::wstring extension;
+
+	idx = fn.rfind('.');
+
+	if (idx != std::string::npos)
+	{
+		extension = fn.substr(idx + 1);
+	}
+	else
+	{
+		// No extension found
+		MessageBox(hwnd, L"Error finding pixel shader file", L"ERROR", MB_OK);
+		exit(0);
+	}
+
+	// Load the texture in.
+	if (extension != L"cso")
+	{
+		MessageBox(hwnd, L"Incorrect pixel shader file type", L"ERROR", MB_OK);
+		exit(0);
+	}
+
+	// Reads compiled shader into buffer (bytecode).
+	HRESULT result = D3DReadFileToBlob(filename, &pixelShaderBuffer);
+	if (result != S_OK)
+	{
+		MessageBox(NULL, filename, L"File not found", MB_OK);
+		exit(0);
+	}
+	// Create the pixel shader from the buffer.
+	renderer->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &depthPixelShader);
+	
+	pixelShaderBuffer->Release();
+	pixelShaderBuffer = 0;
+}
+
 // Given pre-compiled file, load and create hull shader.
 void BaseShader::loadHullShader(const wchar_t* filename)
 {
@@ -459,6 +502,43 @@ void BaseShader::loadComputeShader(const wchar_t* filename)
 	renderer->CreateComputeShader(computeShaderBuffer->GetBufferPointer(), computeShaderBuffer->GetBufferSize(), NULL, &computeShader);
 
 	computeShaderBuffer->Release();
+}
+
+// De/Activate shader stages and send shaders to GPU.
+void BaseShader::renderDepth(ID3D11DeviceContext* deviceContext, int indexCount)
+{
+	// Set the vertex input layout.
+	deviceContext->IASetInputLayout(layout);
+
+	// Set the vertex and pixel shaders that will be used to render.
+	deviceContext->VSSetShader(vertexShader, NULL, 0);
+	deviceContext->PSSetShader(depthPixelShader, NULL, 0);
+	deviceContext->CSSetShader(NULL, NULL, 0);
+	
+	// if Hull shader is not null then set HS and DS
+	if (hullShader)
+	{
+		deviceContext->HSSetShader(hullShader, NULL, 0);
+		deviceContext->DSSetShader(domainShader, NULL, 0);
+	}
+	else
+	{
+		deviceContext->HSSetShader(NULL, NULL, 0);
+		deviceContext->DSSetShader(NULL, NULL, 0);
+	}
+
+	// if geometry shader is not null then set GS
+	if (geometryShader)
+	{
+		deviceContext->GSSetShader(geometryShader, NULL, 0);
+	}
+	else
+	{
+		deviceContext->GSSetShader(NULL, NULL, 0);
+	}
+
+	// Render the triangle.
+	deviceContext->DrawIndexed(indexCount, 0, 0);
 }
 
 // De/Activate shader stages and send shaders to GPU.

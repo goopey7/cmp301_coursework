@@ -24,6 +24,19 @@ class LightBase
 				attenuation
 			};
 		}
+
+		void generateViewMatrix()
+		{
+			light.generateViewMatrix();
+		}
+		XMMATRIX getViewMatrix()
+		{
+			return light.getViewMatrix();
+		}
+		XMMATRIX getOrthoMatrix()
+		{
+			return light.getOrthoMatrix();
+		}
   protected:
 	  Light light;
 	  LightType type;

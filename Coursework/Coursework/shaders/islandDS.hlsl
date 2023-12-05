@@ -33,6 +33,7 @@ struct OutputType
 	float2 tex : TEXCOORD0;
     float height : COLOR;
 	float3 worldPos : TEXCOORD1;
+    float4 depthPos : TEXCOORD2;
 };
 
 float getHeight(float2 uv)
@@ -71,6 +72,7 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 	output.tex = texCoord;
     output.height = height;
 
+    output.depthPos = output.position;
 
     return output;
 }

@@ -4,7 +4,7 @@
 
 IslandShader::IslandShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"islandVS.cso", L"islandHS.cso", L"islandDS.cso", L"islandPS.cso");
+	initShader(L"islandVS.cso", L"islandHS.cso", L"islandDS.cso", L"islandPS.cso", L"islandDepthPS.cso");
 }
 
 IslandShader::~IslandShader()
@@ -124,12 +124,13 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_t* ds,
-							  const wchar_t* ps)
+							  const wchar_t* ps, const wchar_t* dps)
 {
 	initShader(vs, ps);
 
 	loadHullShader(hs);
 	loadDomainShader(ds);
+	loadDepthPixelShader(dps);
 }
 
 void IslandShader::setShaderParameters(
@@ -205,6 +206,52 @@ void IslandShader::setShaderParameters(
 	deviceContext->PSSetShaderResources(1, 1, &texture1);
 	deviceContext->PSSetShaderResources(2, 1, &heightMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
+
+	deviceContext->DSSetShaderResources(0, 1, &heightMap);
+}
+
+void IslandShader::setDepthShaderParameters(
+	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
+	const XMMATRIX& projectionMatrix,
+	ID3D11ShaderResourceView* heightMap,
+	float* edges, float* inside, float height)
+{
+	HRESULT result;
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	MatrixBufferType* dataPtr;
+
+	XMMATRIX tworld, tview, tproj;
+
+	// Transpose the matrices to prepare them for the shader.
+	tworld = XMMatrixTranspose(worldMatrix);
+	tview = XMMatrixTranspose(viewMatrix);
+	tproj = XMMatrixTranspose(projectionMatrix);
+	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr->world = tworld; // worldMatrix;
+	dataPtr->view = tview;
+	dataPtr->projection = tproj;
+	deviceContext->Unmap(matrixBuffer, 0);
+	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
+
+	TimeBufferType* timeData;
+	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	timeData = (TimeBufferType*)mappedResource.pData;
+	timeData->amplitude = height;
+	timeData->time = 0.f;
+	timeData->frequency = 0.f;
+	timeData->speed = 0.f;
+	deviceContext->Unmap(timeBuffer, 0);
+	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
+
+	TesType* tesData;
+	result = deviceContext->Map(tesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	tesData = (TesType*)mappedResource.pData;
+	tesData->edges = static_cast<XMFLOAT4>(edges);
+	tesData->inside = static_cast<XMFLOAT2>(inside);
+	tesData->padding = {0.0f, 0.0f};
+	deviceContext->Unmap(tesBuffer, 0);
+	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
 
 	deviceContext->DSSetShaderResources(0, 1, &heightMap);
 }
