@@ -5,6 +5,8 @@ cbuffer MatrixBuffer : register(b0)
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
+    matrix lightViewMatrix;
+    matrix lightProjectionMatrix;
 };
 
 cbuffer TimeBuffer : register(b1)
@@ -34,6 +36,7 @@ struct OutputType
     float height : COLOR;
 	float3 worldPos : TEXCOORD1;
     float4 depthPos : TEXCOORD2;
+    float4 lightViewPos : TEXCOORD3;
 };
 
 float getHeight(float2 uv)
@@ -73,6 +76,10 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     output.height = height;
 
     output.depthPos = output.position;
+
+    output.lightViewPos = mul(float4(vertexPosition, 1.f), worldMatrix);
+    output.lightViewPos = mul(output.lightViewPos, lightViewMatrix);
+    output.lightViewPos = mul(output.lightViewPos, lightProjectionMatrix);
 
     return output;
 }

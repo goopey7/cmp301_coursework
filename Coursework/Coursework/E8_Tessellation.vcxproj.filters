@@ -121,8 +121,8 @@
     <FxCompile Include="shaders\waterDS.hlsl">
       <Filter>Resource Files\Water</Filter>
     </FxCompile>
-    <FxCompile Include="islandDepthPS.hlsl">
-      <Filter>Resource Files\Island</Filter>
+    <FxCompile Include="depthPS.hlsl">
+      <Filter>Resource Files</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

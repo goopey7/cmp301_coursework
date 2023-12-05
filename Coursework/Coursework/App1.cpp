@@ -17,12 +17,13 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"waterHeight", L"res/Water_001_DISP.png");
 
 	// Create Mesh object and shader object
-	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, 0.f, 0.f, 100.f, 100.f);
+	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1.f, 0.f, 0.f, 100.f, 100.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
 	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
 	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
 	//pointLightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
+	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	PointLight* pointLight = new PointLight();
 	DirectionLight* dirLight = new DirectionLight();
@@ -106,6 +107,7 @@ void App1::update(float dt)
 {
 	((DirectionLight*)lights[0])->setDirection((XMFLOAT3)lightDir);
 	((DirectionLight*)lights[0])->setPosition(pointLightPos);
+
 	elapsedTime += timer->getTime();
 
 	// Generate the view matrix based on the camera's position.
@@ -124,6 +126,7 @@ void App1::depthPass()
 
 	auto ctx = renderer->getDeviceContext();
 
+	// render terrain
 	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
 	{
 		islandMesh->sendData(ctx, i);
@@ -135,6 +138,12 @@ void App1::depthPass()
 
 		islandShader->renderDepth(ctx, islandMesh->getIndexCount());
 	}
+
+	// render test sphere
+	worldMat *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
+	shadowTestMesh->sendData(ctx);
+	colorShader->setDepthShaderParamters(ctx, worldMat, lightViewMat, lightProjMat);
+	colorShader->renderDepth(ctx, shadowTestMesh->getIndexCount());
 
 	renderer->setBackBufferRenderTarget();
 	renderer->resetViewport();
@@ -190,13 +199,20 @@ void App1::finalPass()
 		islandMesh->sendData(ctx, i);
 		islandShader->setShaderParameters(
 			ctx, worldMatrix, viewMatrix, projectionMatrix,
-			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"),
-			textureMgr->getTexture(L"islandHeight"),
+			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"),
+			shadowMap->getDepthMapSRV(),
 			lights, edges, inside, texRes, islandHeight
 		);
 
 		islandShader->render(ctx, islandMesh->getIndexCount());
 	}
+
+	// render test sphere
+	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
+	shadowTestMesh->sendData(ctx);
+	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
+	colorShader->render(ctx, shadowTestMesh->getIndexCount());
+
 	/*
 	pointLightMesh->sendData(ctx);
 	worldMatrix *= XMMatrixTranslation(pointLightPos.x, pointLightPos.y, pointLightPos.z);
@@ -273,6 +289,7 @@ void App1::gui()
 
 	ImGui::Begin("ShadowMap");
 		ImGui::Image(shadowMap->getDepthMapSRV(), ImVec2(256, 256));
+		ImGui::SliderFloat3("TestMeshPos", (float*)&testMeshPos, -100.f, 100.f);
 	ImGui::End();
 
 	// Render UI

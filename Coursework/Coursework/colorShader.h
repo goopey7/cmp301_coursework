@@ -8,9 +8,10 @@ public:
 	~ColorShader();
 
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix);
+	void setDepthShaderParamters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix);
 
 private:
-	void initShader(const wchar_t* vs, const wchar_t* ps);
+	void initShader(const wchar_t* vs, const wchar_t* ps, const wchar_t* dps);
 
 
 private:

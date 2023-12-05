@@ -4,6 +4,15 @@
 using namespace std;
 using namespace DirectX;
 
+struct ShadowMatrixBufferType
+{
+	XMMATRIX world;
+	XMMATRIX view;
+	XMMATRIX projection;
+	XMMATRIX lightView;
+	XMMATRIX lightProjection;
+};
+
 struct LightBufferType
 {
 	XMFLOAT4 diffuse;

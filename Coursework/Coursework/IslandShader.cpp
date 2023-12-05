@@ -4,7 +4,7 @@
 
 IslandShader::IslandShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"islandVS.cso", L"islandHS.cso", L"islandDS.cso", L"islandPS.cso", L"islandDepthPS.cso");
+	initShader(L"islandVS.cso", L"islandHS.cso", L"islandDS.cso", L"islandPS.cso", L"depthPS.cso");
 }
 
 IslandShader::~IslandShader()
@@ -63,7 +63,7 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 
 	// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
 	matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	matrixBufferDesc.ByteWidth = sizeof(MatrixBufferType);
+	matrixBufferDesc.ByteWidth = sizeof(ShadowMatrixBufferType);
 	matrixBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	matrixBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	matrixBufferDesc.MiscFlags = 0;
@@ -106,6 +106,17 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	renderer->CreateSamplerState(&samplerDesc, &sampleState);
 
+	// Sampler for shadow map sampling.
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	samplerDesc.BorderColor[0] = 1.0f;
+	samplerDesc.BorderColor[1] = 1.0f;
+	samplerDesc.BorderColor[2] = 1.0f;
+	samplerDesc.BorderColor[3] = 1.0f;
+	renderer->CreateSamplerState(&samplerDesc, &sampleStateShadow);
+
 	// Setup light buffer
 	// Setup the description of the light dynamic constant buffer that is in the pixel shader.
 	// Note that ByteWidth always needs to be a multiple of 16 if using D3D11_BIND_CONSTANT_BUFFER
@@ -136,12 +147,12 @@ void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_
 void IslandShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1,
-	ID3D11ShaderResourceView* heightMap,
+	ID3D11ShaderResourceView* heightMap, ID3D11ShaderResourceView* depthMap,
 	const std::vector<LightBase*>& lights, float* edges, float* inside, float texRes, float height)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	MatrixBufferType* dataPtr;
+	ShadowMatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj;
 
@@ -150,10 +161,12 @@ void IslandShader::setShaderParameters(
 	tview = XMMatrixTranspose(viewMatrix);
 	tproj = XMMatrixTranspose(projectionMatrix);
 	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr = (ShadowMatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
+	dataPtr->lightView = XMMatrixTranspose(lights[0]->getViewMatrix());
+	dataPtr->lightProjection = XMMatrixTranspose(lights[0]->getOrthoMatrix());
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -205,7 +218,9 @@ void IslandShader::setShaderParameters(
 	deviceContext->PSSetShaderResources(0, 1, &texture0);
 	deviceContext->PSSetShaderResources(1, 1, &texture1);
 	deviceContext->PSSetShaderResources(2, 1, &heightMap);
+	deviceContext->PSSetShaderResources(3, 1, &depthMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
+	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
 
 	deviceContext->DSSetShaderResources(0, 1, &heightMap);
 }
@@ -218,7 +233,7 @@ void IslandShader::setDepthShaderParameters(
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	MatrixBufferType* dataPtr;
+	ShadowMatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj;
 
@@ -227,10 +242,12 @@ void IslandShader::setDepthShaderParameters(
 	tview = XMMatrixTranspose(viewMatrix);
 	tproj = XMMatrixTranspose(projectionMatrix);
 	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr = (ShadowMatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
+	dataPtr->lightView = tproj;
+	dataPtr->lightProjection = tproj;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 

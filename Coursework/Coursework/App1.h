@@ -35,6 +35,7 @@ private:
 	IslandShader* islandShader;
 	WaterShader* waterShader;
 	ColorShader* colorShader;
+	SphereMesh* shadowTestMesh;
 
 	ShadowMap* shadowMap;
 
@@ -55,8 +56,11 @@ private:
 	float inside[2] = {32.f, 32.f};
 
 	// light variables
-	float lightDir[3] = {1.f, 0.8f, 0.25f};
-	XMFLOAT3 pointLightPos = { 27.f, 7.f, 21.f };
+	float lightDir[3] = {1.f, -0.7f, 0.25f};
+	XMFLOAT3 pointLightPos = { 27.f, 50.f, 21.f };
+
+	// shadow test variables
+	XMFLOAT3 testMeshPos = { 27.f, 7.f, 21.f };
 
 	float elapsedTime = 0.f;
 };

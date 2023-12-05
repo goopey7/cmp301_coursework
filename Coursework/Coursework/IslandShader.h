@@ -13,7 +13,7 @@ public:
 	IslandShader(ID3D11Device* device, HWND hwnd);
 	~IslandShader();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1, ID3D11ShaderResourceView * heightMap, const std::vector<LightBase*>& lights, float* edges, float* inside, float texRes, float height);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1, ID3D11ShaderResourceView * heightMap, ID3D11ShaderResourceView* depthMap ,const std::vector<LightBase*>& lights, float* edges, float* inside, float texRes, float height);
 	void setDepthShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 								  const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
 								  ID3D11ShaderResourceView* heightMap,
@@ -27,6 +27,7 @@ private:
 private:
 	ID3D11Buffer * matrixBuffer;
 	ID3D11SamplerState* sampleState;
+	ID3D11SamplerState* sampleStateShadow;
 	ID3D11Buffer* lightBuffer;
 	ID3D11Buffer* timeBuffer;
 	ID3D11Buffer* tesBuffer;

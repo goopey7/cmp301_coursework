@@ -2,7 +2,7 @@
 
 ColorShader::ColorShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"colorVS.cso", L"colorPS.cso");
+	initShader(L"colorVS.cso", L"colorPS.cso", L"depthPS.cso");
 }
 
 ColorShader::~ColorShader()
@@ -25,13 +25,14 @@ ColorShader::~ColorShader()
 	BaseShader::~BaseShader();
 }
 
-void ColorShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
+void ColorShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename, const wchar_t* dpsFilename)
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
 	loadPixelShader(psFilename);
+	loadDepthPixelShader(dpsFilename);
 
 	// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
 	matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -46,6 +47,29 @@ void ColorShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 void ColorShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 	const XMMATRIX& projectionMatrix)
+{
+	HRESULT result;
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	MatrixBufferType* dataPtr;
+
+	XMMATRIX tworld, tview, tproj;
+
+	// Transpose the matrices to prepare them for the shader.
+	tworld = XMMatrixTranspose(worldMatrix);
+	tview = XMMatrixTranspose(viewMatrix);
+	tproj = XMMatrixTranspose(projectionMatrix);
+	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr->world = tworld; // worldMatrix;
+	dataPtr->view = tview;
+	dataPtr->projection = tproj;
+	deviceContext->Unmap(matrixBuffer, 0);
+	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
+}
+
+void ColorShader::setDepthShaderParamters(ID3D11DeviceContext* deviceContext,
+										  const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
+										  const XMMATRIX& projectionMatrix)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;

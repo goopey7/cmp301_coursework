@@ -51,7 +51,6 @@ class BaseShader
 	void compute(ID3D11DeviceContext* dc, int x, int y, int z);
 
   protected:
-	virtual void initShader(const wchar_t*, const wchar_t*) = 0;
 	void loadVertexShader(
 		const wchar_t* filename); ///< Load Vertex shader, for stand position, tex, normal geomtry
 	void loadColourVertexShader(
