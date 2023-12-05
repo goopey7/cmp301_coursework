@@ -56,8 +56,9 @@ private:
 	float inside[2] = {32.f, 32.f};
 
 	// light variables
-	float lightDir[3] = {1.f, -0.7f, 0.25f};
-	XMFLOAT3 pointLightPos = { 27.f, 50.f, 21.f };
+	XMFLOAT3 lightDir = {1.f, -0.7f, 0.25f};
+	XMFLOAT3 dirLightPos = { 27.f, 50.f, 21.f };
+	XMFLOAT3 pointLightPos = { 40.f, 7.f, 20.f };
 
 	// shadow test variables
 	XMFLOAT3 testMeshPos = { 27.f, 7.f, 21.f };

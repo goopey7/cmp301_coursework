@@ -28,10 +28,10 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	PointLight* pointLight = new PointLight();
 	DirectionLight* dirLight = new DirectionLight();
 	dirLight->setDirection((XMFLOAT3)lightDir);
-	dirLight->setPosition((XMFLOAT3)pointLightPos);
+	dirLight->setPosition((XMFLOAT3)dirLightPos);
 
 	lights.push_back(dirLight);
-	//lights.push_back(pointLight);
+	lights.push_back(pointLight);
 
 	shadowMap = new ShadowMap(renderer->getDevice(), 1024 * 5, 1024 * 5);
 }
@@ -105,8 +105,9 @@ bool App1::frame()
 
 void App1::update(float dt)
 {
-	((DirectionLight*)lights[0])->setDirection((XMFLOAT3)lightDir);
-	((DirectionLight*)lights[0])->setPosition(pointLightPos);
+	((DirectionLight*)lights[0])->setDirection(lightDir);
+	((DirectionLight*)lights[0])->setPosition(dirLightPos);
+	((PointLight*)lights[1])->setPosition(pointLightPos);
 
 	elapsedTime += timer->getTime();
 
@@ -120,9 +121,9 @@ void App1::depthPass()
 	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
 
 	lights[0]->generateViewMatrix();
-	XMMATRIX lightViewMat = lights[0]->getViewMatrix();
-	XMMATRIX lightProjMat = lights[0]->getOrthoMatrix();
-	XMMATRIX worldMat = renderer->getWorldMatrix();
+	XMMATRIX lightViewMatrix = lights[0]->getViewMatrix();
+	XMMATRIX lightProjMatrix = lights[0]->getOrthoMatrix();
+	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
 	auto ctx = renderer->getDeviceContext();
 
@@ -131,7 +132,7 @@ void App1::depthPass()
 	{
 		islandMesh->sendData(ctx, i);
 		islandShader->setDepthShaderParameters(
-			ctx, worldMat, lightViewMat, lightProjMat,
+			ctx, worldMatrix, lightViewMatrix, lightProjMatrix,
 			textureMgr->getTexture(L"islandHeight"),
 			edges, inside, islandHeight
 		);
@@ -140,28 +141,21 @@ void App1::depthPass()
 	}
 
 	// render test sphere
-	worldMat *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
+	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
 	shadowTestMesh->sendData(ctx);
-	colorShader->setDepthShaderParamters(ctx, worldMat, lightViewMat, lightProjMat);
+	colorShader->setDepthShaderParamters(ctx, worldMatrix, lightViewMatrix, lightProjMatrix);
 	colorShader->renderDepth(ctx, shadowTestMesh->getIndexCount());
 
 	renderer->setBackBufferRenderTarget();
 	renderer->resetViewport();
 
-	/*
-	pointLightMesh->sendData(ctx);
-	worldMatrix *= XMMatrixTranslation(pointLightPos.x, pointLightPos.y, pointLightPos.z);
-	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
-	colorShader->render(ctx, pointLightMesh->getIndexCount());
-	*/
-	/*
 	worldMatrix = renderer->getWorldMatrix();
 	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
 	{
 		waterMesh->sendData(ctx, i);
 
-		waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix,
+		waterShader->setShaderParameters(ctx, worldMatrix, lightViewMatrix, lightProjMatrix,
 			edges,
 			inside,
 			elapsedTime,
@@ -175,7 +169,6 @@ void App1::depthPass()
 
 		waterShader->render(ctx, waterMesh->getIndexCount());
 	}
-	*/
 }
 
 void App1::finalPass()
@@ -213,13 +206,6 @@ void App1::finalPass()
 	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
 	colorShader->render(ctx, shadowTestMesh->getIndexCount());
 
-	/*
-	pointLightMesh->sendData(ctx);
-	worldMatrix *= XMMatrixTranslation(pointLightPos.x, pointLightPos.y, pointLightPos.z);
-	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
-	colorShader->render(ctx, pointLightMesh->getIndexCount());
-	*/
-	/*
 	worldMatrix = renderer->getWorldMatrix();
 	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
@@ -240,7 +226,6 @@ void App1::finalPass()
 
 		waterShader->render(ctx, waterMesh->getIndexCount());
 	}
-	*/
 }
 
 bool App1::render()
@@ -273,7 +258,8 @@ void App1::gui()
 	ImGui::DragFloat3("CameraPos", (float*)&camera->getPosition(), -100.f, 100.f);
 
 	ImGui::Begin("Lighting");
-		ImGui::SliderFloat3("LightDir", lightDir, -1.f, 1.f);
+		ImGui::SliderFloat3("LightDir", (float*)&lightDir, -1.f, 1.f);
+		ImGui::SliderFloat3("DirLightPos", (float*)&dirLightPos, -100.f, 100.f);
 		ImGui::SliderFloat3("PointLightPos", (float*)&pointLightPos, -100.f, 100.f);
 	ImGui::End();
 
