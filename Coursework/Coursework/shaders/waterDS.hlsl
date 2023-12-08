@@ -16,7 +16,7 @@ cbuffer TimeBuffer : register(b1)
     float time;
     float steepness;
     float waveLength;
-    float speed;
+    float gravity;
 }
 
 struct ConstantOutputType
@@ -69,13 +69,14 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     float2 uv2 = lerp(patch[3].tex, patch[2].tex, uvwCoord.y);
     float2 texCoord = lerp(uv1, uv2, uvwCoord.x);
 
-    //texCoord = 25.f * texCoord + float2(-time * speed, -time * speed);
+    //texCoord = 25.f * texCoord + float2(-time * gravity, -time * speed);
     //float height = getHeight(texCoord) * steepness;
     //vertexPosition.y += height;
 
     // https://catlikecoding.com/unity/tutorials/flow/waves/
     float k = 2 * PI / waveLength;
-    float f = k * (vertexPosition.x - time * speed);
+    float c = sqrt(gravity / k);
+    float f = k * (vertexPosition.x - time * c);
     float a = steepness / k;
 
     vertexPosition.x += a * cos(f);

@@ -47,7 +47,7 @@ private:
 	float texRes = 15.f;
 
 	// water variables
-	float waterSpeed = 2.f;
+	float waterGravity = 9.81f;
 	float waterSteepness = 0.6f;
 	float waterWaveLength = 10.f;
 

@@ -157,7 +157,7 @@ void App1::depthPass()
 			edges,
 			inside,
 			elapsedTime,
-			waterSpeed,
+			waterGravity,
 			waterSteepness, 
 			waterWaveLength,
 			textureMgr->getTexture(L"waterHeight")
@@ -215,7 +215,7 @@ void App1::finalPass()
 			edges,
 			inside,
 			elapsedTime,
-			waterSpeed,
+			waterGravity,
 			waterSteepness, 
 			waterWaveLength,
 			textureMgr->getTexture(L"waterHeight"),
@@ -267,8 +267,8 @@ void App1::gui()
 	ImGui::End();
 
 	ImGui::Begin("Water");
-		ImGui::SliderFloat("Speed", &waterSpeed, 0.f, 5.f);
-		ImGui::SliderFloat("WaveLength", &waterWaveLength, 0.f, 10.f);
+		ImGui::SliderFloat("Gravity", &waterGravity, 0.f, 20.f);
+		ImGui::SliderFloat("WaveLength", &waterWaveLength, 0.f, 20.f);
 		ImGui::SliderFloat("Steepness", &waterSteepness, 0.f, 1.f);
 	ImGui::End();
 
