@@ -1,3 +1,5 @@
+static const float PI = 3.14159265359f;
+
 Texture2D heightMap : register(t0);
 
 cbuffer MatrixBuffer : register(b0)
@@ -11,7 +13,7 @@ cbuffer TimeBuffer : register(b1)
 {
     float time;
     float amp;
-    float freq;
+    float waveLength;
     float speed;
 }
 
@@ -31,10 +33,11 @@ struct OutputType
 {
     float4 position : SV_POSITION;
 	float2 tex : TEXCOORD0;
+    float height : COLOR;
 	float3 worldPos : TEXCOORD1;
-    float3 worldNormal : TEXCOORD2;
-    float3 worldTangent : TEXCOORD3;
-    float3 worldBitangent : TEXCOORD4;
+    float4 depthPos : TEXCOORD2;
+    float4 lightViewPos : TEXCOORD3;
+    float3 worldNormal : TEXCOORD4;
 };
 
 float getHeight(float2 uv)
@@ -64,9 +67,17 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     float2 uv2 = lerp(patch[3].tex, patch[2].tex, uvwCoord.y);
     float2 texCoord = lerp(uv1, uv2, uvwCoord.x);
 
-    texCoord = 25.f * texCoord + float2(-time * speed, -time * speed);
-    float height = getHeight(texCoord) * amp;
-    vertexPosition.y += height;
+    //texCoord = 25.f * texCoord + float2(-time * speed, -time * speed);
+    //float height = getHeight(texCoord) * amp;
+    //vertexPosition.y += height;
+
+    // https://catlikecoding.com/unity/tutorials/flow/waves/
+    float k = 2 * PI / waveLength;
+    float f = k * (vertexPosition.x - time * speed);
+    vertexPosition.y = amp * sin(f);
+
+    float3 tangent = normalize(float3(1, k * amp * cos(f), 0));
+    float3 normal = float3(-tangent.y, tangent.x, 0);
 
     // Calculate the position of the new vertex against the world, view, and projection matrices.
     output.position = mul(float4(vertexPosition, 1.0f), worldMatrix);
@@ -76,13 +87,16 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 
 	output.tex = texCoord;
 
-    output.worldNormal = float3(0, 1, 0);
-    output.worldTangent = float3(1, 0, 0);
-    output.worldBitangent = float3(0, 0, 1);
+    output.depthPos = output.position;
 
-    output.worldNormal = normalize(mul(float4(output.worldNormal, 1.f), worldMatrix));
-    output.worldTangent = normalize(mul(float4(output.worldTangent, 1.f), worldMatrix));
-    output.worldBitangent = normalize(mul(float4(output.worldBitangent, 1.f), worldMatrix));
+    output.worldNormal = normal;
+    output.worldNormal = mul(float4(output.worldNormal, 1.f), worldMatrix).xyz;
+    //output.worldTangent = float3(1, 0, 0);
+    //output.worldBitangent = float3(0, 0, 1);
+
+    //output.worldNormal = normalize(mul(float4(output.worldNormal, 1.f), worldMatrix));
+    //output.worldTangent = normalize(mul(float4(output.worldTangent, 1.f), worldMatrix));
+    //output.worldBitangent = normalize(mul(float4(output.worldBitangent, 1.f), worldMatrix));
 
     return output;
 }

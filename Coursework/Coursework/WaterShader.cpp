@@ -3,7 +3,7 @@
 
 WaterShader::WaterShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"waterVS.cso", L"waterHS.cso", L"waterDS.cso", L"waterPS.cso");
+	initShader(L"waterVS.cso", L"waterHS.cso", L"waterDS.cso", L"waterPS.cso", L"depthPS.cso");
 }
 
 WaterShader::~WaterShader()
@@ -101,7 +101,7 @@ void WaterShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	// Note that ByteWidth always needs to be a multiple of 16 if using D3D11_BIND_CONSTANT_BUFFER
 	// or CreateBuffer will fail.
 	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	lightBufferDesc.ByteWidth = sizeof(LightBufferType);
+	lightBufferDesc.ByteWidth = sizeof(LightBufferType) * 8 + sizeof(uint32_t) * 4;
 	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	lightBufferDesc.MiscFlags = 0;
@@ -110,19 +110,21 @@ void WaterShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 }
 
 void WaterShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_t* ds,
-							  const wchar_t* ps)
+							  const wchar_t* ps, const wchar_t* dps)
 {
 	initShader(vs, ps);
 
 	loadHullShader(hs);
 	loadDomainShader(ds);
+	loadDepthPixelShader(dps);
 }
 
 void WaterShader::setShaderParameters(
 ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
 							 float* edges, float* inside, float time, float speed, float amp, float freq,
-		ID3D11ShaderResourceView* color, ID3D11ShaderResourceView* normal, ID3D11ShaderResourceView* height
+		ID3D11ShaderResourceView* color, ID3D11ShaderResourceView* normal, ID3D11ShaderResourceView* height,
+	const std::vector<LightBase*>& lights
 )
 {
 	HRESULT result;
@@ -169,22 +171,66 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->DSSetShaderResources(0, 1, &height);
 
-	/*
-	// Additional
-	//  Send light data to pixel shader
-	LightBufferType* lightPtr;
-	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	lightPtr = (LightBufferType*)mappedResource.pData;
-	lightPtr->lightType = 1;
-	lightPtr->diffuse = light->getDiffuseColour();
-	lightPtr->direction = light->getDirection();
-	lightPtr->position = light->getPosition();
-	lightPtr->texRes = texRes;
-	lightPtr->ambient = light->getAmbientColour();
-	lightPtr->attenuation = 10.f;
+
+	std::vector<LightBufferType> ldata;
+	for (auto& light : lights)
+	{
+		ldata.push_back(light->getConstBuffer());
+	}
+	LightsBufferType* lightsPtr;
+	result = deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	lightsPtr = (LightsBufferType*)mappedResource.pData;
+	std::move(ldata.begin(), ldata.begin() + min(ldata.size(), 8), lightsPtr->lights);
+	lightsPtr->lightCount = min(ldata.size(), 8);
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
-	*/
+}
 
-	//deviceContext->DSSetShaderResources(0, 1, &heightMap);
+void WaterShader::setDepthShaderParameters(ID3D11DeviceContext* deviceContext,
+										   const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
+										   const XMMATRIX& projectionMatrix, float* edges,
+										   float* inside, float time, float speed, float amp,
+										   float freq, ID3D11ShaderResourceView* height)
+{
+	HRESULT result;
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	MatrixBufferType* dataPtr;
+
+	XMMATRIX tworld, tview, tproj;
+
+	// Transpose the matrices to prepare them for the shader.
+	tworld = XMMatrixTranspose(worldMatrix);
+	tview = XMMatrixTranspose(viewMatrix);
+	tproj = XMMatrixTranspose(projectionMatrix);
+	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr->world = tworld; // worldMatrix;
+	dataPtr->view = tview;
+	dataPtr->projection = tproj;
+	deviceContext->Unmap(matrixBuffer, 0);
+	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
+
+	TimeBufferType* timeData;
+	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	timeData = (TimeBufferType*)mappedResource.pData;
+	timeData->time = time;
+	timeData->amplitude = amp;
+	timeData->frequency = freq;
+	timeData->speed = speed;
+	deviceContext->Unmap(timeBuffer, 0);
+	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
+	deviceContext->PSSetConstantBuffers(1, 1, &timeBuffer);
+
+	TesType* tesData;
+	result = deviceContext->Map(tesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	tesData = (TesType*)mappedResource.pData;
+	tesData->edges = static_cast<XMFLOAT4>(edges);
+	tesData->inside = static_cast<XMFLOAT2>(inside);
+	tesData->padding = {0.0f, 0.0f};
+	deviceContext->Unmap(tesBuffer, 0);
+	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
+
+	// Set shader texture resources
+	deviceContext->PSSetSamplers(0, 1, &sampleState);
+	deviceContext->DSSetShaderResources(0, 1, &height);
 }

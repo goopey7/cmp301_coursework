@@ -33,7 +33,7 @@ struct OutputType
 {
     float4 position : SV_POSITION;
 	float2 tex : TEXCOORD0;
-    float height : COLOR;
+    float height : COLOR0;
 	float3 worldPos : TEXCOORD1;
     float4 depthPos : TEXCOORD2;
     float4 lightViewPos : TEXCOORD3;

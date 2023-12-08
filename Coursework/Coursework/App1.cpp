@@ -34,6 +34,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	lights.push_back(pointLight);
 
 	shadowMap = new ShadowMap(renderer->getDevice(), 1024 * 5, 1024 * 5);
+	camera->setPosition(0.f, 10.f, -10.f);
 }
 
 App1::~App1()
@@ -146,29 +147,27 @@ void App1::depthPass()
 	colorShader->setDepthShaderParamters(ctx, worldMatrix, lightViewMatrix, lightProjMatrix);
 	colorShader->renderDepth(ctx, shadowTestMesh->getIndexCount());
 
-	renderer->setBackBufferRenderTarget();
-	renderer->resetViewport();
-
 	worldMatrix = renderer->getWorldMatrix();
 	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
 	{
 		waterMesh->sendData(ctx, i);
 
-		waterShader->setShaderParameters(ctx, worldMatrix, lightViewMatrix, lightProjMatrix,
+		waterShader->setDepthShaderParameters(ctx, worldMatrix, lightViewMatrix, lightProjMatrix,
 			edges,
 			inside,
 			elapsedTime,
 			waterSpeed,
 			waterAmp, 
-			waterFreq,
-			textureMgr->getTexture(L"waterColor"),
-			textureMgr->getTexture(L"waterNormal"),
+			waterWaveLength,
 			textureMgr->getTexture(L"waterHeight")
 		);
 
-		waterShader->render(ctx, waterMesh->getIndexCount());
+		waterShader->renderDepth(ctx, waterMesh->getIndexCount());
 	}
+
+	renderer->setBackBufferRenderTarget();
+	renderer->resetViewport();
 }
 
 void App1::finalPass()
@@ -218,10 +217,11 @@ void App1::finalPass()
 			elapsedTime,
 			waterSpeed,
 			waterAmp, 
-			waterFreq,
+			waterWaveLength,
 			textureMgr->getTexture(L"waterColor"),
 			textureMgr->getTexture(L"waterNormal"),
-			textureMgr->getTexture(L"waterHeight")
+			textureMgr->getTexture(L"waterHeight"),
+			lights
 		);
 
 		waterShader->render(ctx, waterMesh->getIndexCount());
@@ -268,9 +268,9 @@ void App1::gui()
 	ImGui::End();
 
 	ImGui::Begin("Water");
-		ImGui::SliderFloat("Speed", &waterSpeed, 0.f, 0.5f);
-		ImGui::SliderFloat("Frequency", &waterFreq, 0.f, 10.f);
-		ImGui::SliderFloat("WaterAmplitude", &waterAmp, 0.f, 10.f);
+		ImGui::SliderFloat("Speed", &waterSpeed, 0.f, 5.f);
+		ImGui::SliderFloat("WaveLength", &waterWaveLength, 0.f, 10.f);
+		ImGui::SliderFloat("Amplitude", &waterAmp, 0.f, 10.f);
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");

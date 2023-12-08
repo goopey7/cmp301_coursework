@@ -13,11 +13,19 @@ class WaterShader : public BaseShader
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
 							 float* edges, float* inside, float time, float speed, float amp, float freq,
-		ID3D11ShaderResourceView* color, ID3D11ShaderResourceView* normal, ID3D11ShaderResourceView* height);
+		ID3D11ShaderResourceView* color, ID3D11ShaderResourceView* normal, ID3D11ShaderResourceView* height,
+		const std::vector<LightBase*>& lights
+		);
+
+	void setDepthShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
+							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
+							 float* edges, float* inside, float time, float speed, float amp, float freq,
+							 ID3D11ShaderResourceView* height
+		);
 
   private:
 	void initShader(const wchar_t* vs, const wchar_t* ps);
-	void initShader(const wchar_t* vs, const wchar_t* hs, const wchar_t* ds, const wchar_t* ps);
+	void initShader(const wchar_t* vs, const wchar_t* hs, const wchar_t* ds, const wchar_t* ps, const wchar_t* dps);
 
   private:
 	ID3D11Buffer* matrixBuffer;

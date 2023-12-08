@@ -47,9 +47,9 @@ private:
 	float texRes = 15.f;
 
 	// water variables
-	float waterSpeed = 0.2f;
+	float waterSpeed = 2.f;
 	float waterAmp = 0.6f;
-	float waterFreq = 0.5f;
+	float waterWaveLength = 10.f;
 
 	// universal tesselation variables
 	float edges[4] = {32.f, 32.f, 32.f, 32.f};
