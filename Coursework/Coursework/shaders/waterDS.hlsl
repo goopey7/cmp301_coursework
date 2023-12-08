@@ -7,6 +7,8 @@ cbuffer MatrixBuffer : register(b0)
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
+    matrix lightViewMatrix;
+    matrix lightProjectionMatrix;
 };
 
 cbuffer TimeBuffer : register(b1)
@@ -89,14 +91,11 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 
     output.depthPos = output.position;
 
-    output.worldNormal = normal;
-    output.worldNormal = mul(float4(output.worldNormal, 1.f), worldMatrix).xyz;
-    //output.worldTangent = float3(1, 0, 0);
-    //output.worldBitangent = float3(0, 0, 1);
+    output.worldNormal = mul(float4(normal, 1.f), worldMatrix).xyz;
 
-    //output.worldNormal = normalize(mul(float4(output.worldNormal, 1.f), worldMatrix));
-    //output.worldTangent = normalize(mul(float4(output.worldTangent, 1.f), worldMatrix));
-    //output.worldBitangent = normalize(mul(float4(output.worldBitangent, 1.f), worldMatrix));
+    output.lightViewPos = mul(float4(vertexPosition, 1.0f), worldMatrix);
+    output.lightViewPos = mul(output.lightViewPos, lightViewMatrix);
+    output.lightViewPos = mul(output.lightViewPos, lightProjectionMatrix);
 
     return output;
 }

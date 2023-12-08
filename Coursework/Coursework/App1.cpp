@@ -22,7 +22,6 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
 	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
-	//pointLightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	PointLight* pointLight = new PointLight();
@@ -138,7 +137,7 @@ void App1::depthPass()
 			edges, inside, islandHeight
 		);
 
-		islandShader->renderDepth(ctx, islandMesh->getIndexCount());
+		//islandShader->renderDepth(ctx, islandMesh->getIndexCount());
 	}
 
 	// render test sphere
@@ -163,7 +162,7 @@ void App1::depthPass()
 			textureMgr->getTexture(L"waterHeight")
 		);
 
-		waterShader->renderDepth(ctx, waterMesh->getIndexCount());
+		//waterShader->renderDepth(ctx, waterMesh->getIndexCount());
 	}
 
 	renderer->setBackBufferRenderTarget();
@@ -218,10 +217,9 @@ void App1::finalPass()
 			waterSpeed,
 			waterAmp, 
 			waterWaveLength,
-			textureMgr->getTexture(L"waterColor"),
-			textureMgr->getTexture(L"waterNormal"),
 			textureMgr->getTexture(L"waterHeight"),
-			lights
+			lights,
+		    shadowMap->getDepthMapSRV()
 		);
 
 		waterShader->render(ctx, waterMesh->getIndexCount());

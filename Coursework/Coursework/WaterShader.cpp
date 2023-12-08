@@ -61,7 +61,7 @@ void WaterShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 
 	// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
 	matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	matrixBufferDesc.ByteWidth = sizeof(MatrixBufferType);
+	matrixBufferDesc.ByteWidth = sizeof(ShadowMatrixBufferType);
 	matrixBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	matrixBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	matrixBufferDesc.MiscFlags = 0;
@@ -123,13 +123,13 @@ void WaterShader::setShaderParameters(
 ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
 							 float* edges, float* inside, float time, float speed, float amp, float freq,
-		ID3D11ShaderResourceView* color, ID3D11ShaderResourceView* normal, ID3D11ShaderResourceView* height,
-	const std::vector<LightBase*>& lights
+		 ID3D11ShaderResourceView* height,
+	const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap
 )
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	MatrixBufferType* dataPtr;
+	ShadowMatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj;
 
@@ -138,10 +138,12 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	tview = XMMatrixTranspose(viewMatrix);
 	tproj = XMMatrixTranspose(projectionMatrix);
 	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr = (ShadowMatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
+	dataPtr->lightView = XMMatrixTranspose(lights[0]->getViewMatrix());
+	dataPtr->lightProjection = XMMatrixTranspose(lights[0]->getOrthoMatrix());
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -166,8 +168,7 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
 
 	// Set shader texture resources
-	deviceContext->PSSetShaderResources(0, 1, &color);
-	deviceContext->PSSetShaderResources(1, 1, &normal);
+	deviceContext->PSSetShaderResources(0, 1, &shadowMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->DSSetShaderResources(0, 1, &height);
 
@@ -194,7 +195,7 @@ void WaterShader::setDepthShaderParameters(ID3D11DeviceContext* deviceContext,
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	MatrixBufferType* dataPtr;
+	ShadowMatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj;
 
@@ -203,10 +204,12 @@ void WaterShader::setDepthShaderParameters(ID3D11DeviceContext* deviceContext,
 	tview = XMMatrixTranspose(viewMatrix);
 	tproj = XMMatrixTranspose(projectionMatrix);
 	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr = (ShadowMatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
+	dataPtr->lightView = tproj;
+	dataPtr->lightProjection = tproj;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 

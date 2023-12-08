@@ -67,13 +67,10 @@ bool hasDepthDataInMap(float2 uv)
 
 bool isInShadow(Texture2D sMap, float2 uv, float4 lightViewPosition, float bias)
 {
-    // Sample the shadow map (get depth of geometry)
     float depthValue = sMap.Sample(shadowSampler, uv).r;
-	// Calculate the depth from the light.
     float lightDepthValue = lightViewPosition.z / lightViewPosition.w;
     lightDepthValue -= bias;
 
-	// Compare the depth of the shadow map value and the depth of the light to determine whether to shadow or to light this pixel.
     if (lightDepthValue < depthValue)
     {
         return false;
@@ -83,7 +80,6 @@ bool isInShadow(Texture2D sMap, float2 uv, float4 lightViewPosition, float bias)
 
 float2 getProjectiveCoords(float4 lightViewPosition)
 {
-    // Calculate the projected texture coordinates.
     float2 projTex = lightViewPosition.xy / lightViewPosition.w;
     projTex *= float2(0.5, -0.5);
     projTex += float2(0.5f, 0.5f);
