@@ -12,15 +12,9 @@ class WaterShader : public BaseShader
 
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
-							 float* edges, float* inside, float time, float speed, float amp, float freq,
+							 float* edges, float* inside, float time, float gravity, float steepness, float wavelength, XMFLOAT2 direction,
 		ID3D11ShaderResourceView* height,
 		const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap
-		);
-
-	void setDepthShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
-							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
-							 float* edges, float* inside, float time, float speed, float amp, float freq,
-							 ID3D11ShaderResourceView* height
 		);
 
   private:

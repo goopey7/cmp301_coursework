@@ -69,7 +69,7 @@ void WaterShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
 
 	timeBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	timeBufferDesc.ByteWidth = sizeof(TimeBufferType);
+	timeBufferDesc.ByteWidth = sizeof(WaterBufferType);
 	timeBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	timeBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	timeBufferDesc.MiscFlags = 0;
@@ -122,7 +122,7 @@ void WaterShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_t
 void WaterShader::setShaderParameters(
 ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
-							 float* edges, float* inside, float time, float speed, float amp, float freq,
+							 float* edges, float* inside, float time, float gravity, float steepness, float wavelength, XMFLOAT2 direction,
 		 ID3D11ShaderResourceView* height,
 	const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap
 )
@@ -147,13 +147,14 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
-	TimeBufferType* timeData;
+	WaterBufferType* waterData;
 	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	timeData = (TimeBufferType*)mappedResource.pData;
-	timeData->time = time;
-	timeData->amplitude = amp;
-	timeData->frequency = freq;
-	timeData->speed = speed;
+	waterData = (WaterBufferType*)mappedResource.pData;
+	waterData->time = time;
+	waterData->steepness = steepness;
+	waterData->waveLength = wavelength;
+	waterData->gravity = gravity;
+	waterData->direction = direction;
 	deviceContext->Unmap(timeBuffer, 0);
 	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
 	deviceContext->PSSetConstantBuffers(1, 1, &timeBuffer);
@@ -187,53 +188,3 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 }
 
-void WaterShader::setDepthShaderParameters(ID3D11DeviceContext* deviceContext,
-										   const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
-										   const XMMATRIX& projectionMatrix, float* edges,
-										   float* inside, float time, float speed, float amp,
-										   float freq, ID3D11ShaderResourceView* height)
-{
-	HRESULT result;
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	ShadowMatrixBufferType* dataPtr;
-
-	XMMATRIX tworld, tview, tproj;
-
-	// Transpose the matrices to prepare them for the shader.
-	tworld = XMMatrixTranspose(worldMatrix);
-	tview = XMMatrixTranspose(viewMatrix);
-	tproj = XMMatrixTranspose(projectionMatrix);
-	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	dataPtr = (ShadowMatrixBufferType*)mappedResource.pData;
-	dataPtr->world = tworld; // worldMatrix;
-	dataPtr->view = tview;
-	dataPtr->projection = tproj;
-	dataPtr->lightView = tproj;
-	dataPtr->lightProjection = tproj;
-	deviceContext->Unmap(matrixBuffer, 0);
-	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
-
-	TimeBufferType* timeData;
-	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	timeData = (TimeBufferType*)mappedResource.pData;
-	timeData->time = time;
-	timeData->amplitude = amp;
-	timeData->frequency = freq;
-	timeData->speed = speed;
-	deviceContext->Unmap(timeBuffer, 0);
-	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
-	deviceContext->PSSetConstantBuffers(1, 1, &timeBuffer);
-
-	TesType* tesData;
-	result = deviceContext->Map(tesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	tesData = (TesType*)mappedResource.pData;
-	tesData->edges = static_cast<XMFLOAT4>(edges);
-	tesData->inside = static_cast<XMFLOAT2>(inside);
-	tesData->padding = {0.0f, 0.0f};
-	deviceContext->Unmap(tesBuffer, 0);
-	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
-
-	// Set shader texture resources
-	deviceContext->PSSetSamplers(0, 1, &sampleState);
-	deviceContext->DSSetShaderResources(0, 1, &height);
-}

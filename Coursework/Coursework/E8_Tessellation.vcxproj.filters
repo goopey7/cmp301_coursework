@@ -16,9 +16,6 @@
     <Filter Include="Resource Files\Island">
       <UniqueIdentifier>{6bd2feda-d494-4e68-8964-156a451f5b75}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\Tesselation">
-      <UniqueIdentifier>{1cf7f94b-cad1-452f-bb81-d03bbf0428f1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Water">
       <UniqueIdentifier>{bace9165-bc5a-4a62-8dd3-5bd432fa24df}</UniqueIdentifier>
     </Filter>
@@ -79,18 +76,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="shaders\tessellation_ds.hlsl">
-      <Filter>Resource Files\Tesselation</Filter>
-    </FxCompile>
-    <FxCompile Include="shaders\tessellation_hs.hlsl">
-      <Filter>Resource Files\Tesselation</Filter>
-    </FxCompile>
-    <FxCompile Include="shaders\tessellation_ps.hlsl">
-      <Filter>Resource Files\Tesselation</Filter>
-    </FxCompile>
-    <FxCompile Include="shaders\tessellation_vs.hlsl">
-      <Filter>Resource Files\Tesselation</Filter>
-    </FxCompile>
     <FxCompile Include="shaders\islandPS.hlsl">
       <Filter>Resource Files\Island</Filter>
     </FxCompile>

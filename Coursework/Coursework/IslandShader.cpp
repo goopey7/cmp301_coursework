@@ -71,7 +71,7 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
 
 	timeBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	timeBufferDesc.ByteWidth = sizeof(TimeBufferType);
+	timeBufferDesc.ByteWidth = sizeof(WaterBufferType);
 	timeBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	timeBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	timeBufferDesc.MiscFlags = 0;
@@ -170,13 +170,13 @@ void IslandShader::setShaderParameters(
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
-	TimeBufferType* timeData;
+	WaterBufferType* timeData;
 	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	timeData = (TimeBufferType*)mappedResource.pData;
-	timeData->amplitude = height;
+	timeData = (WaterBufferType*)mappedResource.pData;
+	timeData->steepness = height;
 	timeData->time = 0.f;
-	timeData->frequency = 0.f;
-	timeData->speed = 0.f;
+	timeData->waveLength = 0.f;
+	timeData->gravity = 0.f;
 	deviceContext->Unmap(timeBuffer, 0);
 	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
 
@@ -251,13 +251,13 @@ void IslandShader::setDepthShaderParameters(
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
-	TimeBufferType* timeData;
+	WaterBufferType* timeData;
 	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	timeData = (TimeBufferType*)mappedResource.pData;
-	timeData->amplitude = height;
+	timeData = (WaterBufferType*)mappedResource.pData;
+	timeData->steepness = height;
 	timeData->time = 0.f;
-	timeData->frequency = 0.f;
-	timeData->speed = 0.f;
+	timeData->waveLength = 0.f;
+	timeData->gravity = 0.f;
 	deviceContext->Unmap(timeBuffer, 0);
 	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
 

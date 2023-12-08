@@ -50,6 +50,7 @@ private:
 	float waterGravity = 9.81f;
 	float waterSteepness = 0.6f;
 	float waterWaveLength = 10.f;
+	XMFLOAT2 waterDirection = {1.f, 1.f};
 
 	// universal tesselation variables
 	float edges[4] = {32.f, 32.f, 32.f, 32.f};

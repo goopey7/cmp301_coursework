@@ -30,12 +30,14 @@ struct LightsBufferType
 	XMUINT3 padding;
 };
 
-struct TimeBufferType
+struct WaterBufferType
 {
 	float time;
-	float amplitude;
-	float frequency;
-	float speed;
+	float steepness;
+	float waveLength;
+	float gravity;
+	XMFLOAT2 direction;
+	XMFLOAT2 padding;
 };
 
 struct TesType

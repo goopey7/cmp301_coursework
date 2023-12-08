@@ -11,12 +11,14 @@ cbuffer MatrixBuffer : register(b0)
     matrix lightProjectionMatrix;
 };
 
-cbuffer TimeBuffer : register(b1)
+cbuffer WaterBuffer : register(b1)
 {
     float time;
     float steepness;
     float waveLength;
     float gravity;
+    float2 direction;
+    float2 padding0;
 }
 
 struct ConstantOutputType
@@ -76,14 +78,27 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     // https://catlikecoding.com/unity/tutorials/flow/waves/
     float k = 2 * PI / waveLength;
     float c = sqrt(gravity / k);
-    float f = k * (vertexPosition.x - time * c);
+    float2 d = normalize(direction);
+    float f = k * (dot(d, vertexPosition.xz) - time * c);
     float a = steepness / k;
 
-    vertexPosition.x += a * cos(f);
+    vertexPosition.x += d.x * (a * cos(f));
     vertexPosition.y = a * sin(f);
+    vertexPosition.z += d.y * (a * cos(f));
 
-    float3 tangent = normalize(float3(1 - steepness * sin(f), steepness * cos(f), 0));
-    float3 normal = float3(-tangent.y, tangent.x, 0);
+    float3 tangent = normalize(float3(
+        1 - d.x * d.x * (steepness * sin(f)),
+        d.x * (steepness * cos(f)),
+        -d.x * d.y * (steepness * sin(f))
+    ));
+
+    float3 binormal = normalize(float3(
+        -d.x * d.y * (steepness * sin(f)),
+        d.y * (steepness * cos(f)),
+        1 - d.y * d.y * (steepness * sin(f))
+    ));
+
+    float3 normal = normalize(cross(binormal, tangent));
 
     // Calculate the position of the new vertex against the world, view, and projection matrices.
     output.position = mul(float4(vertexPosition, 1.0f), worldMatrix);

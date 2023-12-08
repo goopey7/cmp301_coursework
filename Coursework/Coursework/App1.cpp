@@ -128,43 +128,11 @@ void App1::depthPass()
 
 	auto ctx = renderer->getDeviceContext();
 
-	// render terrain
-	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
-	{
-		islandMesh->sendData(ctx, i);
-		islandShader->setDepthShaderParameters(
-			ctx, worldMatrix, lightViewMatrix, lightProjMatrix,
-			textureMgr->getTexture(L"islandHeight"),
-			edges, inside, islandHeight
-		);
-
-		//islandShader->renderDepth(ctx, islandMesh->getIndexCount());
-	}
-
 	// render test sphere
 	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
 	shadowTestMesh->sendData(ctx);
 	colorShader->setDepthShaderParamters(ctx, worldMatrix, lightViewMatrix, lightProjMatrix);
 	colorShader->renderDepth(ctx, shadowTestMesh->getIndexCount());
-
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
-	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
-	{
-		waterMesh->sendData(ctx, i);
-
-		waterShader->setDepthShaderParameters(ctx, worldMatrix, lightViewMatrix, lightProjMatrix,
-			edges,
-			inside,
-			elapsedTime,
-			waterGravity,
-			waterSteepness, 
-			waterWaveLength,
-			textureMgr->getTexture(L"waterHeight")
-		);
-
-		//waterShader->renderDepth(ctx, waterMesh->getIndexCount());
-	}
 
 	renderer->setBackBufferRenderTarget();
 	renderer->resetViewport();
@@ -218,6 +186,7 @@ void App1::finalPass()
 			waterGravity,
 			waterSteepness, 
 			waterWaveLength,
+			waterDirection,
 			textureMgr->getTexture(L"waterHeight"),
 			lights,
 		    shadowMap->getDepthMapSRV()
@@ -270,6 +239,7 @@ void App1::gui()
 		ImGui::SliderFloat("Gravity", &waterGravity, 0.f, 20.f);
 		ImGui::SliderFloat("WaveLength", &waterWaveLength, 0.f, 20.f);
 		ImGui::SliderFloat("Steepness", &waterSteepness, 0.f, 1.f);
+		ImGui::SliderFloat2("Direction", (float*)&waterDirection, -1.f, 1.f);
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");
