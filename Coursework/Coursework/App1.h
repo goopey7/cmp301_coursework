@@ -48,7 +48,7 @@ private:
 
 	// water variables
 	float waterSpeed = 2.f;
-	float waterAmp = 0.6f;
+	float waterSteepness = 0.6f;
 	float waterWaveLength = 10.f;
 
 	// universal tesselation variables

@@ -14,7 +14,7 @@ cbuffer MatrixBuffer : register(b0)
 cbuffer TimeBuffer : register(b1)
 {
     float time;
-    float amp;
+    float steepness;
     float waveLength;
     float speed;
 }
@@ -70,15 +70,18 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     float2 texCoord = lerp(uv1, uv2, uvwCoord.x);
 
     //texCoord = 25.f * texCoord + float2(-time * speed, -time * speed);
-    //float height = getHeight(texCoord) * amp;
+    //float height = getHeight(texCoord) * steepness;
     //vertexPosition.y += height;
 
     // https://catlikecoding.com/unity/tutorials/flow/waves/
     float k = 2 * PI / waveLength;
     float f = k * (vertexPosition.x - time * speed);
-    vertexPosition.y = amp * sin(f);
+    float a = steepness / k;
 
-    float3 tangent = normalize(float3(1, k * amp * cos(f), 0));
+    vertexPosition.x += a * cos(f);
+    vertexPosition.y = a * sin(f);
+
+    float3 tangent = normalize(float3(1 - steepness * sin(f), steepness * cos(f), 0));
     float3 normal = float3(-tangent.y, tangent.x, 0);
 
     // Calculate the position of the new vertex against the world, view, and projection matrices.

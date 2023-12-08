@@ -19,7 +19,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Create Mesh object and shader object
 	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1.f, 0.f, 0.f, 100.f, 100.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
-	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
+	//waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
+	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, 0.f, 0.f, 25.f, 25.f);
 	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
@@ -157,7 +158,7 @@ void App1::depthPass()
 			inside,
 			elapsedTime,
 			waterSpeed,
-			waterAmp, 
+			waterSteepness, 
 			waterWaveLength,
 			textureMgr->getTexture(L"waterHeight")
 		);
@@ -215,7 +216,7 @@ void App1::finalPass()
 			inside,
 			elapsedTime,
 			waterSpeed,
-			waterAmp, 
+			waterSteepness, 
 			waterWaveLength,
 			textureMgr->getTexture(L"waterHeight"),
 			lights,
@@ -268,7 +269,7 @@ void App1::gui()
 	ImGui::Begin("Water");
 		ImGui::SliderFloat("Speed", &waterSpeed, 0.f, 5.f);
 		ImGui::SliderFloat("WaveLength", &waterWaveLength, 0.f, 10.f);
-		ImGui::SliderFloat("Amplitude", &waterAmp, 0.f, 10.f);
+		ImGui::SliderFloat("Steepness", &waterSteepness, 0.f, 1.f);
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");
