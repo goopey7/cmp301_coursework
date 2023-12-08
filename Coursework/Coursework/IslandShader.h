@@ -29,8 +29,7 @@ private:
 	ID3D11SamplerState* sampleState;
 	ID3D11SamplerState* sampleStateShadow;
 	ID3D11Buffer* lightBuffer;
-	ID3D11Buffer* timeBuffer;
+	ID3D11Buffer* islandBuffer;
 	ID3D11Buffer* tesBuffer;
-	ID3D11Buffer* texResBuffer;
 };
 

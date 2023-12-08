@@ -30,14 +30,20 @@ struct LightsBufferType
 	XMUINT3 padding;
 };
 
+struct Wave
+{
+	float steepness;
+	float length;
+	XMFLOAT2 direction;
+};
+
 struct WaterBufferType
 {
+	Wave waves[8];
+	uint32_t numWaves;
 	float time;
-	float steepness;
-	float waveLength;
 	float gravity;
-	XMFLOAT2 direction;
-	XMFLOAT2 padding;
+	float padding;
 };
 
 struct TesType
@@ -47,8 +53,9 @@ struct TesType
 	XMFLOAT2 padding;
 };
 
-struct TexResBufferType
+struct IslandBufferType
 {
+	float height;
 	float texRes;
-	XMFLOAT3 padding;
+	XMFLOAT2 padding;
 };

@@ -17,17 +17,17 @@ IslandShader::~IslandShader()
 	}
 
 	// Release the matrix constant buffer.
-	if (timeBuffer)
-	{
-		timeBuffer->Release();
-		timeBuffer = 0;
-	}
-
-	// Release the matrix constant buffer.
 	if (matrixBuffer)
 	{
 		matrixBuffer->Release();
 		matrixBuffer = 0;
+	}
+
+	// Release the matrix constant buffer.
+	if (islandBuffer)
+	{
+		islandBuffer->Release();
+		islandBuffer = 0;
 	}
 
 	// Release the layout.
@@ -53,9 +53,8 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
 	D3D11_BUFFER_DESC lightBufferDesc;
-	D3D11_BUFFER_DESC timeBufferDesc;
 	D3D11_BUFFER_DESC tesBufferDesc;
-	D3D11_BUFFER_DESC texResBufferDesc;
+	D3D11_BUFFER_DESC islandBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
@@ -70,14 +69,6 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	matrixBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
 
-	timeBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	timeBufferDesc.ByteWidth = sizeof(WaterBufferType);
-	timeBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	timeBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	timeBufferDesc.MiscFlags = 0;
-	timeBufferDesc.StructureByteStride = 0;
-	renderer->CreateBuffer(&timeBufferDesc, NULL, &timeBuffer);
-
 	tesBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	tesBufferDesc.ByteWidth = sizeof(TesType);
 	tesBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -86,13 +77,13 @@ void IslandShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	tesBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&tesBufferDesc, NULL, &tesBuffer);
 
-	texResBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	texResBufferDesc.ByteWidth = sizeof(TexResBufferType);
-	texResBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	texResBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	texResBufferDesc.MiscFlags = 0;
-	texResBufferDesc.StructureByteStride = 0;
-	renderer->CreateBuffer(&texResBufferDesc, NULL, &texResBuffer);
+	islandBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	islandBufferDesc.ByteWidth = sizeof(IslandBufferType);
+	islandBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	islandBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	islandBufferDesc.MiscFlags = 0;
+	islandBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&islandBufferDesc, NULL, &islandBuffer);
 
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
@@ -170,16 +161,6 @@ void IslandShader::setShaderParameters(
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
-	WaterBufferType* timeData;
-	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	timeData = (WaterBufferType*)mappedResource.pData;
-	timeData->steepness = height;
-	timeData->time = 0.f;
-	timeData->waveLength = 0.f;
-	timeData->gravity = 0.f;
-	deviceContext->Unmap(timeBuffer, 0);
-	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
-
 	TesType* tesData;
 	result = deviceContext->Map(tesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	tesData = (TesType*)mappedResource.pData;
@@ -189,13 +170,14 @@ void IslandShader::setShaderParameters(
 	deviceContext->Unmap(tesBuffer, 0);
 	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
 
-	TexResBufferType* texResData;
-	result = deviceContext->Map(texResBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	texResData = (TexResBufferType*)mappedResource.pData;
-	texResData->texRes = texRes;
-	texResData->padding = {0.0f, 0.0f, 0.f};
-	deviceContext->Unmap(texResBuffer, 0);
-	deviceContext->PSSetConstantBuffers(1, 1, &texResBuffer);
+	IslandBufferType* islandData;
+	result = deviceContext->Map(islandBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	islandData = (IslandBufferType*)mappedResource.pData;
+	islandData->texRes = texRes;
+	islandData->height = height;
+	deviceContext->Unmap(islandBuffer, 0);
+	deviceContext->DSSetConstantBuffers(1, 1, &islandBuffer);
+	deviceContext->PSSetConstantBuffers(1, 1, &islandBuffer);
 
 	// Additional
 	// Send light data to pixel shader
@@ -250,16 +232,6 @@ void IslandShader::setDepthShaderParameters(
 	dataPtr->lightProjection = tproj;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
-
-	WaterBufferType* timeData;
-	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	timeData = (WaterBufferType*)mappedResource.pData;
-	timeData->steepness = height;
-	timeData->time = 0.f;
-	timeData->waveLength = 0.f;
-	timeData->gravity = 0.f;
-	deviceContext->Unmap(timeBuffer, 0);
-	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
 
 	TesType* tesData;
 	result = deviceContext->Map(tesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);

@@ -9,12 +9,11 @@ cbuffer MatrixBuffer : register(b0)
     matrix lightProjectionMatrix;
 };
 
-cbuffer TimeBuffer : register(b1)
+cbuffer IslandBuffer : register(b1)
 {
-    float time;
-    float amplitude;
-    float frequency;
-    float speed;
+    float heightMultiplier;
+    float texRes;
+    float2 padding;
 };
 
 struct ConstantOutputType
@@ -63,7 +62,7 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     float2 uv2 = lerp(patch[3].tex, patch[2].tex, uvwCoord.y);
     float2 texCoord = lerp(uv1, uv2, uvwCoord.x);
 
-    float height = getHeight(texCoord) * amplitude;
+    float height = getHeight(texCoord) * heightMultiplier;
     vertexPosition.y += height;
 
     // Calculate the position of the new vertex against the world, view, and projection matrices.

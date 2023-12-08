@@ -65,6 +65,8 @@ private:
 	XMFLOAT3 testMeshPos = { 27.f, 7.f, 21.f };
 
 	float elapsedTime = 0.f;
+
+	std::vector<Wave> waves;
 };
 
 #endif

@@ -35,6 +35,11 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	shadowMap = new ShadowMap(renderer->getDevice(), 1024 * 5, 1024 * 5);
 	camera->setPosition(0.f, 10.f, -10.f);
+
+	waves.push_back(Wave());
+	waves[0].direction = { 1.f, 1.f };
+	waves[0].length = 10.f;
+	waves[0].steepness = 0.6f;
 }
 
 App1::~App1()
@@ -184,10 +189,7 @@ void App1::finalPass()
 			inside,
 			elapsedTime,
 			waterGravity,
-			waterSteepness, 
-			waterWaveLength,
-			waterDirection,
-			textureMgr->getTexture(L"waterHeight"),
+			waves,
 			lights,
 		    shadowMap->getDepthMapSRV()
 		);
@@ -237,9 +239,28 @@ void App1::gui()
 
 	ImGui::Begin("Water");
 		ImGui::SliderFloat("Gravity", &waterGravity, 0.f, 20.f);
-		ImGui::SliderFloat("WaveLength", &waterWaveLength, 0.f, 20.f);
-		ImGui::SliderFloat("Steepness", &waterSteepness, 0.f, 1.f);
-		ImGui::SliderFloat2("Direction", (float*)&waterDirection, -1.f, 1.f);
+		if (ImGui::Button("Add Wave") && waves.size() < 8)
+		{
+			waves.push_back(Wave());
+			waves[waves.size() - 1].direction = { 1.f, 1.f };
+			waves[waves.size() - 1].length = 10.f;
+			waves[waves.size() - 1].steepness = 0.6f;
+		}
+
+		ImGui::Text("Waves");
+		ImGui::Separator();
+
+		for (size_t i = 0; i < waves.size(); i++)
+		{
+			Wave& wave = waves[i];
+			char waveLetter = i + 65;
+			ImGui::Text("Wave %c", waveLetter);
+			std::string waveid = "Wave" + std::string(&waveLetter, 1);
+			ImGui::SliderFloat((waveid + "Length").c_str(), &wave.length, 0.f, 20.f);
+			ImGui::SliderFloat((waveid + "Steepness").c_str(), &wave.steepness, 0.f, 1.f);
+			ImGui::SliderFloat2((waveid + "Direction").c_str(), (float*)&wave.direction, -1.f, 1.f);
+			ImGui::Separator();
+		}
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");

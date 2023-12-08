@@ -16,10 +16,10 @@ WaterShader::~WaterShader()
 	}
 
 	// Release the matrix constant buffer.
-	if (timeBuffer)
+	if (waterBuffer)
 	{
-		timeBuffer->Release();
-		timeBuffer = 0;
+		waterBuffer->Release();
+		waterBuffer = 0;
 	}
 
 	// Release the matrix constant buffer.
@@ -52,7 +52,7 @@ void WaterShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
 	D3D11_BUFFER_DESC lightBufferDesc;
-	D3D11_BUFFER_DESC timeBufferDesc;
+	D3D11_BUFFER_DESC waterBufferDesc;
 	D3D11_BUFFER_DESC tesBufferDesc;
 
 	// Load (+ compile) shader files
@@ -68,13 +68,13 @@ void WaterShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	matrixBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
 
-	timeBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	timeBufferDesc.ByteWidth = sizeof(WaterBufferType);
-	timeBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	timeBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	timeBufferDesc.MiscFlags = 0;
-	timeBufferDesc.StructureByteStride = 0;
-	renderer->CreateBuffer(&timeBufferDesc, NULL, &timeBuffer);
+	waterBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	waterBufferDesc.ByteWidth = sizeof(Wave) * 8 + sizeof(XMFLOAT4);
+	waterBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	waterBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	waterBufferDesc.MiscFlags = 0;
+	waterBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&waterBufferDesc, NULL, &waterBuffer);
 
 	tesBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	tesBufferDesc.ByteWidth = sizeof(TesType);
@@ -122,8 +122,7 @@ void WaterShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_t
 void WaterShader::setShaderParameters(
 ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
-							 float* edges, float* inside, float time, float gravity, float steepness, float wavelength, XMFLOAT2 direction,
-		 ID3D11ShaderResourceView* height,
+							 float* edges, float* inside, float time, float gravity, const std::vector<Wave>& waves,
 	const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap
 )
 {
@@ -148,31 +147,27 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
 	WaterBufferType* waterData;
-	result = deviceContext->Map(timeBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	result = deviceContext->Map(waterBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	waterData = (WaterBufferType*)mappedResource.pData;
 	waterData->time = time;
-	waterData->steepness = steepness;
-	waterData->waveLength = wavelength;
 	waterData->gravity = gravity;
-	waterData->direction = direction;
-	deviceContext->Unmap(timeBuffer, 0);
-	deviceContext->DSSetConstantBuffers(1, 1, &timeBuffer);
-	deviceContext->PSSetConstantBuffers(1, 1, &timeBuffer);
+	waterData->numWaves = min(waves.size(), 8);
+	std::copy(waves.begin(), waves.begin() + min(waves.size(), 8), waterData->waves);
+	deviceContext->Unmap(waterBuffer, 0);
+	deviceContext->DSSetConstantBuffers(1, 1, &waterBuffer);
+	deviceContext->PSSetConstantBuffers(1, 1, &waterBuffer);
 
 	TesType* tesData;
 	result = deviceContext->Map(tesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	tesData = (TesType*)mappedResource.pData;
 	tesData->edges = static_cast<XMFLOAT4>(edges);
 	tesData->inside = static_cast<XMFLOAT2>(inside);
-	tesData->padding = {0.0f, 0.0f};
 	deviceContext->Unmap(tesBuffer, 0);
 	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
 
 	// Set shader texture resources
 	deviceContext->PSSetShaderResources(0, 1, &shadowMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
-	deviceContext->DSSetShaderResources(0, 1, &height);
-
 
 	std::vector<LightBufferType> ldata;
 	for (auto& light : lights)

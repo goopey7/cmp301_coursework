@@ -1,7 +1,5 @@
 static const float PI = 3.14159265359f;
 
-Texture2D heightMap : register(t0);
-
 cbuffer MatrixBuffer : register(b0)
 {
     matrix worldMatrix;
@@ -11,14 +9,20 @@ cbuffer MatrixBuffer : register(b0)
     matrix lightProjectionMatrix;
 };
 
+struct Wave
+{
+    float steepness;
+    float length;
+    float2 direction;
+};
+
 cbuffer WaterBuffer : register(b1)
 {
+    Wave waves[8];
+    uint numWaves;
     float time;
-    float steepness;
-    float waveLength;
     float gravity;
-    float2 direction;
-    float2 padding0;
+    float padding0;
 }
 
 struct ConstantOutputType
@@ -44,17 +48,32 @@ struct OutputType
     float3 worldNormal : TEXCOORD4;
 };
 
-float getHeight(float2 uv)
+float3 gerstnerWave(Wave wave, float3 pos, inout float3 tangent, inout float3 binormal)
 {
-    int width, height;
-    heightMap.GetDimensions(width, height);
+    // https://catlikecoding.com/unity/tutorials/flow/waves/
+    float k = 2 * PI / wave.length;
+    float c = sqrt(gravity / k);
+    float2 d = normalize(wave.direction);
+    float f = k * (dot(d, pos.xz) - time * c);
+    float a = wave.steepness / k;
 
-    uv = frac(uv);
-    uv -= floor(uv);
+    tangent += normalize(float3(
+        1 - d.x * d.x * (wave.steepness * sin(f)),
+        d.x * (wave.steepness * cos(f)),
+        -d.x * d.y * (wave.steepness * sin(f))
+    ));
 
-    int3 texCoord = int3(uv * int2(width, height), 0);
+    binormal += normalize(float3(
+        -d.x * d.y * (wave.steepness * sin(f)),
+        d.y * (wave.steepness * cos(f)),
+        1 - d.y * d.y * (wave.steepness * sin(f))
+    ));
 
-    return heightMap.Load(texCoord);
+    return float3(
+        d.x * (a * cos(f)),
+        a * sin(f),
+        d.y * (a * cos(f))
+    );
 }
 
 [domain("quad")]
@@ -71,34 +90,18 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     float2 uv2 = lerp(patch[3].tex, patch[2].tex, uvwCoord.y);
     float2 texCoord = lerp(uv1, uv2, uvwCoord.x);
 
-    //texCoord = 25.f * texCoord + float2(-time * gravity, -time * speed);
-    //float height = getHeight(texCoord) * steepness;
-    //vertexPosition.y += height;
+    float3 tangent = float3(0.f, 0.f, 0.f);
+    float3 binormal = float3(0.f, 0.f, 0.f);
+    float3 p = vertexPosition.xyz;
 
-    // https://catlikecoding.com/unity/tutorials/flow/waves/
-    float k = 2 * PI / waveLength;
-    float c = sqrt(gravity / k);
-    float2 d = normalize(direction);
-    float f = k * (dot(d, vertexPosition.xz) - time * c);
-    float a = steepness / k;
-
-    vertexPosition.x += d.x * (a * cos(f));
-    vertexPosition.y = a * sin(f);
-    vertexPosition.z += d.y * (a * cos(f));
-
-    float3 tangent = normalize(float3(
-        1 - d.x * d.x * (steepness * sin(f)),
-        d.x * (steepness * cos(f)),
-        -d.x * d.y * (steepness * sin(f))
-    ));
-
-    float3 binormal = normalize(float3(
-        -d.x * d.y * (steepness * sin(f)),
-        d.y * (steepness * cos(f)),
-        1 - d.y * d.y * (steepness * sin(f))
-    ));
+    for (uint i = 0; i < numWaves; i++)
+    {
+        Wave wave = waves[i];
+        p += gerstnerWave(wave, vertexPosition, tangent, binormal);
+    }
 
     float3 normal = normalize(cross(binormal, tangent));
+    vertexPosition = p;
 
     // Calculate the position of the new vertex against the world, view, and projection matrices.
     output.position = mul(float4(vertexPosition, 1.0f), worldMatrix);

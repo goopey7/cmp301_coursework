@@ -23,10 +23,11 @@ cbuffer LightBuffer : register(b0)
     float3 padding0;
 };
 
-cbuffer TexResBuffer : register(b1)
+cbuffer IslandBuffer : register(b1)
 {
+    float heightMultiplier;
     float texRes;
-    float3 padding1;
+    float2 padding;
 };
 
 struct InputType
