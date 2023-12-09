@@ -1,6 +1,3 @@
-Texture2D heightMap : register(t0);
-Texture2D normalMap : register(t1);
-
 struct InputType
 {
     float4 position : POSITION;

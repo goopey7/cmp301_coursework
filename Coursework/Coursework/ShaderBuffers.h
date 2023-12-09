@@ -66,3 +66,13 @@ struct CameraBufferType
 	float padding;
 };
 
+struct WaterPPBufferType
+{
+	float time;
+	float frequency;
+	float speed;
+	float displacement;
+	XMFLOAT3 waterTint;
+	float padding;
+};
+

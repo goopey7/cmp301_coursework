@@ -11,6 +11,8 @@
 #include "TesselatedPlaneMesh.h"
 #include "PointLight.h"
 #include "DirectionLight.h"
+#include "TextureShader.h"
+#include "WaterPPShader.h"
 
 class App1 : public BaseApplication
 {
@@ -25,8 +27,9 @@ public:
 
 protected:
 	bool render();
-	void finalPass();
+	void sceneToTexturePass();
 	void depthPass();
+	void finalPass();
 	void gui();
 
 private:
@@ -67,6 +70,17 @@ private:
 	float elapsedTime = 0.f;
 
 	std::vector<Wave> waves;
+
+	// post processing
+	RenderTexture* renderTexture;
+	OrthoMesh* orthoMesh;
+	TextureShader* textureShader;
+	WaterPPShader* waterPPShader;
+
+	float underwaterFreq = 120.f;
+	float underwaterSpeed = 2.75f;
+	float underwaterDisplacement = 0.004272f;
+	XMFLOAT3 underwaterColor = { 0.1f, 0.275f, 1.f };
 };
 
 #endif

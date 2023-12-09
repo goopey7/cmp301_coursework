@@ -203,3 +203,30 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 }
 
+void WaterShader::setPostProcessingParameters(ID3D11DeviceContext* deviceContext,
+											  const XMMATRIX& worldMatrix,
+											  const XMMATRIX& viewMatrix,
+											  const XMMATRIX& projectionMatrix,
+											  ID3D11ShaderResourceView* texture)
+{
+	HRESULT result;
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	MatrixBufferType* dataPtr;
+
+	XMMATRIX tworld, tview, tproj;
+
+	// Transpose the matrices to prepare them for the shader.
+	tworld = XMMatrixTranspose(worldMatrix);
+	tview = XMMatrixTranspose(viewMatrix);
+	tproj = XMMatrixTranspose(projectionMatrix);
+	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr->world = tworld; // worldMatrix;
+	dataPtr->view = tview;
+	dataPtr->projection = tproj;
+	deviceContext->Unmap(matrixBuffer, 0);
+	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
+	deviceContext->PSSetShaderResources(0, 1, &texture);
+	deviceContext->PSSetSamplers(0, 1, &sampleState);
+}
+

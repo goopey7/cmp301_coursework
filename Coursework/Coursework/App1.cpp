@@ -16,6 +16,13 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"waterNormal", L"res/Water_001_NORM.jpg");
 	textureMgr->loadTexture(L"waterHeight", L"res/Water_001_DISP.png");
 
+	renderTexture = new RenderTexture(renderer->getDevice(), screenWidth, screenHeight, SCREEN_NEAR,
+									  SCREEN_DEPTH);
+
+	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth, screenHeight, 0, 0);
+	textureShader = new TextureShader(renderer->getDevice(), hwnd);
+	waterPPShader = new WaterPPShader(renderer->getDevice(), hwnd);
+
 	// Create Mesh object and shader object
 	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 2.f, 0.f, 0.f, 100.f, 100.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
@@ -152,12 +159,8 @@ void App1::depthPass()
 	renderer->resetViewport();
 }
 
-void App1::finalPass()
+void App1::sceneToTexturePass()
 {
-	// Clear the scene. (default blue colour)
-	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
-	//renderer->beginScene(0.f,0.f,0.f,1.f);
-
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
 
 	// Get the world, view, projection, and ortho matrices from the camera and
@@ -167,6 +170,8 @@ void App1::finalPass()
 	projectionMatrix = renderer->getProjectionMatrix();
 
 	auto ctx = renderer->getDeviceContext();
+	renderTexture->setRenderTarget(ctx);
+	renderTexture->clearRenderTarget(ctx, 0.39f, 0.58f, 0.92f, 0.2f);
 
 	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
 	{
@@ -181,42 +186,78 @@ void App1::finalPass()
 		islandShader->render(ctx, islandMesh->getIndexCount());
 	}
 
+	if (camera->getPosition().y > 0.6f)
+	{
+		worldMatrix = renderer->getWorldMatrix();
+		worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
+		for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
+		{
+			waterMesh->sendData(ctx, i);
+
+			waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges,
+											 inside, elapsedTime, waterGravity, waves, lights,
+											 shadowMap->getDepthMapSRV(), camera->getPosition());
+
+			waterShader->render(ctx, waterMesh->getIndexCount());
+		}
+	}
+
 	// render test sphere
+	renderer->setAlphaBlending(true);
 	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
 	shadowTestMesh->sendData(ctx);
 	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
 	colorShader->render(ctx, shadowTestMesh->getIndexCount());
+	renderer->setAlphaBlending(false);
 
-	worldMatrix = renderer->getWorldMatrix();
-	worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
-	for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
+	// reset render target back to the swapchain back-buffer and not the render texture
+	renderer->setBackBufferRenderTarget();
+}
+
+void App1::finalPass()
+{
+	renderer->setWireframeMode(false);
+
+	// Clear the scene. (default blue colour)
+	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
+
+	XMMATRIX worldMatrix = renderer->getWorldMatrix();
+	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();
+	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();
+
+	renderer->setZBuffer(false);
+
+	auto ctx = renderer->getDeviceContext();
+	orthoMesh->sendData(ctx);
+
+	if (camera->getPosition().y > 0.6f)
 	{
-		waterMesh->sendData(ctx, i);
-
-		waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix,
-			edges,
-			inside,
-			elapsedTime,
-			waterGravity,
-			waves,
-			lights,
-		    shadowMap->getDepthMapSRV(),
-			camera->getPosition()
-		);
-
-		waterShader->render(ctx, waterMesh->getIndexCount());
+		textureShader->setShaderParameters(ctx, worldMatrix, orthoViewMatrix, orthoMatrix,
+										   renderTexture->getShaderResourceView());
+		textureShader->render(ctx, orthoMesh->getIndexCount());
 	}
+	else
+	{
+		waterPPShader->setShaderParameters(ctx, worldMatrix, orthoViewMatrix, orthoMatrix,
+										   renderTexture->getShaderResourceView(), elapsedTime,
+			underwaterFreq, underwaterSpeed, underwaterDisplacement, underwaterColor
+			);
+		waterPPShader->render(ctx, orthoMesh->getIndexCount());
+	}
+
+	renderer->setZBuffer(true);
+
+	renderer->setWireframeMode(wireframeToggle);
 }
 
 bool App1::render()
 {
 	depthPass();
+	sceneToTexturePass();
 	finalPass();
 
-	// Render GUI
 	gui();
 
-	// Swap the buffers
 	renderer->endScene();
 
 	return true;
@@ -273,6 +314,13 @@ void App1::gui()
 			ImGui::SliderFloat2((waveid + "Direction").c_str(), (float*)&wave.direction, -1.f, 1.f);
 			ImGui::Separator();
 		}
+	ImGui::End();
+
+	ImGui::Begin("Underwater");
+		ImGui::SliderFloat3("UnderwaterColor", (float*)&underwaterColor, 0.f, 1.f);
+		ImGui::SliderFloat("UnderwaterFreq", &underwaterFreq, 0.f, 250.f);
+		ImGui::SliderFloat("UnderwaterSpeed", &underwaterSpeed, 0.f, 5.f);
+		ImGui::SliderFloat("UnderwaterDisplacement", &underwaterDisplacement, 0.f, 0.01f, "%.6f");
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");

@@ -1,11 +1,11 @@
-#include "colorShader.h"
+#include "TextureShader.h"
 
-ColorShader::ColorShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
+TextureShader::TextureShader(ID3D11Device* device, HWND hwnd) : BaseShader(device, hwnd)
 {
-	initShader(L"simpleVS.cso", L"colorPS.cso", L"depthPS.cso");
+	initShader(L"simpleVS.cso", L"texturePS.cso", L"depthPS.cso");
 }
 
-ColorShader::~ColorShader()
+TextureShader::~TextureShader()
 {
 	// Release the matrix constant buffer.
 	if (matrixBuffer)
@@ -25,7 +25,7 @@ ColorShader::~ColorShader()
 	BaseShader::~BaseShader();
 }
 
-void ColorShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename, const wchar_t* dpsFilename)
+void TextureShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename, const wchar_t* dpsFilename)
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
 
@@ -42,11 +42,25 @@ void ColorShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	matrixBufferDesc.MiscFlags = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
+
+	D3D11_SAMPLER_DESC samplerDesc;
+
+	// Create a texture sampler state description.
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	renderer->CreateSamplerState(&samplerDesc, &sampleState);
 }
 
-void ColorShader::setShaderParameters(
+void TextureShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
-	const XMMATRIX& projectionMatrix)
+	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -65,9 +79,12 @@ void ColorShader::setShaderParameters(
 	dataPtr->projection = tproj;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
+
+	deviceContext->PSSetShaderResources(0, 1, &texture);
+	deviceContext->PSSetSamplers(0, 1, &sampleState);
 }
 
-void ColorShader::setDepthShaderParamters(ID3D11DeviceContext* deviceContext,
+void TextureShader::setDepthShaderParamters(ID3D11DeviceContext* deviceContext,
 										  const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 										  const XMMATRIX& projectionMatrix)
 {
