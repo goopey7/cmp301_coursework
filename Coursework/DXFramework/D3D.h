@@ -73,6 +73,9 @@ public:
 	void setWireframeMode(bool b);	///< Set wireframe render mode on/off
 	bool getWireframeState();		///< Returns currect wireframe state on/off
 
+	void setFrontCulling(bool b);	///< Set front culling render mode on/off
+	bool getFrontCullingState();		///< Returns currect wireframe state on/off
+
 	void setBackBufferRenderTarget();	///< Sets the back buffer as the render target
 	void resetViewport();				///< Restores viewport if dimensions of render target were different
 
@@ -93,6 +96,7 @@ protected:
 	
 	bool zbufferState;		///< Variable tracks z-buffer state
 	bool wireframeState;	///< Variable tracks wireframe state
+	bool frontCullingState;	///< Variable tracks front culling state
 	bool alphaBlendState;	///< Variable tracks alpha blending state
 
 	bool isFullscreen;
@@ -113,6 +117,7 @@ protected:
 	ID3D11DepthStencilState* depthStencilState;
 	ID3D11DepthStencilView* depthStencilView;
 	ID3D11RasterizerState* rasterState;			///< Default FILL raster state
+	ID3D11RasterizerState* rasterStateCF;		///< Cull Front raster state
 	ID3D11RasterizerState* rasterStateWF;		///< Wireframe raster state
 	XMMATRIX projectionMatrix;					///< Identity projection matrix
 	XMMATRIX worldMatrix;						///< Identity world matrix

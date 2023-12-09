@@ -13,6 +13,7 @@
 #include "DirectionLight.h"
 #include "TextureShader.h"
 #include "WaterPPShader.h"
+#include "UnderbellyShader.h"
 
 class App1 : public BaseApplication
 {
@@ -81,6 +82,11 @@ private:
 	float underwaterSpeed = 2.75f;
 	float underwaterDisplacement = 0.004272f;
 	XMFLOAT3 underwaterColor = { 0.1f, 0.275f, 1.f };
+
+	//underwater objects
+	PlaneMesh* islandUnderbellyMesh;
+	UnderbellyShader* underbellyShader;
+	XMVECTOR underbellyPos = { 0.f, .6f, -50.f };
 };
 
 #endif

@@ -51,6 +51,9 @@
     <ClCompile Include="WaterPPShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UnderbellyShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h">
@@ -84,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WaterPPShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UnderbellyShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -126,6 +132,9 @@
     </FxCompile>
     <FxCompile Include="waterPostFx.hlsl">
       <Filter>Resource Files\Water</Filter>
+    </FxCompile>
+    <FxCompile Include="islandUnderbellyPS.hlsl">
+      <Filter>Resource Files\Island</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

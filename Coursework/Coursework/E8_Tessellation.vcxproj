@@ -172,6 +172,7 @@
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="TesselatedPlaneMesh.cpp" />
     <ClCompile Include="TextureShader.cpp" />
+    <ClCompile Include="UnderbellyShader.cpp" />
     <ClCompile Include="WaterPPShader.cpp" />
     <ClCompile Include="WaterShader.cpp" />
   </ItemGroup>
@@ -185,6 +186,7 @@
     <ClInclude Include="ShaderBuffers.h" />
     <ClInclude Include="TesselatedPlaneMesh.h" />
     <ClInclude Include="TextureShader.h" />
+    <ClInclude Include="UnderbellyShader.h" />
     <ClInclude Include="WaterPPShader.h" />
     <ClInclude Include="WaterShader.h" />
   </ItemGroup>
@@ -198,6 +200,10 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="islandUnderbellyPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="simpleVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>

@@ -215,6 +215,9 @@ void D3D::createDefaultRasterState()
 	device->CreateRasterizerState(&rasterDesc, &rasterState);
 	deviceContext->RSSetState(rasterState);
 
+	rasterDesc.CullMode = D3D11_CULL_FRONT;
+	device->CreateRasterizerState(&rasterDesc, &rasterStateCF);
+
 	//create raster state with wireframe enabled
 	rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
 	device->CreateRasterizerState(&rasterDesc, &rasterStateWF);
@@ -502,11 +505,41 @@ void D3D::setWireframeMode(bool b)
 	}
 	else
 	{
-		deviceContext->RSSetState(rasterState);
+		if (frontCullingState)
+		{
+			deviceContext->RSSetState(rasterStateCF);
+		}
+		else
+		{
+			deviceContext->RSSetState(rasterState);
+		}
 	}
 }
 
 bool D3D::getWireframeState() 
 {
 	return wireframeState;
+}
+
+void D3D::setFrontCulling(bool b)
+{
+	if (wireframeState)
+	{
+		return;
+	}
+
+	frontCullingState = b;
+	if (b)
+	{
+		deviceContext->RSSetState(rasterStateCF);
+	}
+	else
+	{
+		deviceContext->RSSetState(rasterState);
+	}
+}
+
+bool D3D::getFrontCullingState() 
+{
+	return frontCullingState;
 }

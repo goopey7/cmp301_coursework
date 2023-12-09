@@ -26,6 +26,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Create Mesh object and shader object
 	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 2.f, 0.f, 0.f, 100.f, 100.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
+	islandUnderbellyMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
+	underbellyShader = new UnderbellyShader(renderer->getDevice(), hwnd);
 	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
 	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
@@ -185,6 +187,29 @@ void App1::sceneToTexturePass()
 
 		islandShader->render(ctx, islandMesh->getIndexCount());
 	}
+
+	renderer->setFrontCulling(true);
+	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix *= XMMatrixTranslationFromVector(underbellyPos);
+	islandUnderbellyMesh->sendData(ctx);
+	underbellyShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"));
+	underbellyShader->render(ctx, islandUnderbellyMesh->getIndexCount());
+	renderer->setFrontCulling(false);
+	worldMatrix = renderer->getWorldMatrix();
+	/*
+	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
+	{
+		islandMesh->sendData(ctx, i);
+		islandShader->setShaderParameters(
+			ctx, worldMatrix, viewMatrix, projectionMatrix,
+			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"),
+			shadowMap->getDepthMapSRV(),
+			lights, edges, inside, texRes, islandHeight
+		);
+
+		islandShader->render(ctx, islandMesh->getIndexCount());
+	}
+	*/
 
 	if (camera->getPosition().y > 0.6f)
 	{
