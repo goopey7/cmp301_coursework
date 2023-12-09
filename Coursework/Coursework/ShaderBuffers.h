@@ -59,3 +59,10 @@ struct IslandBufferType
 	float texRes;
 	XMFLOAT2 padding;
 };
+
+struct CameraBufferType
+{
+	XMFLOAT3 cameraPosition;
+	float padding;
+};
+

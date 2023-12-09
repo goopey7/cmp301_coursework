@@ -10,6 +10,7 @@ struct InputType
     float4 depthPos : TEXCOORD2;
     float4 lightViewPos : TEXCOORD3;
     float3 worldNormal : TEXCOORD4;
+    float3 viewVector : TEXCOORD5;
 };
 
 struct Light
@@ -28,6 +29,16 @@ cbuffer LightBuffer : register(b0)
     uint numLights;
     float3 padding0;
 };
+
+float4 calculateSpecularLighting(float3 lightDirection, float3 normal, float3 viewVector)
+{
+    float4 specularColor = float4(1.f, 1.f, 1.f, 1.f);
+    float specularPower = 32.f;
+
+    float3 halfway = normalize(lightDirection + viewVector);
+    float specularIntensity = pow(max(dot(normal, halfway), 0.0), specularPower);
+    return saturate(specularColor * specularIntensity);
+}
 
 float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
 {
@@ -79,21 +90,23 @@ float4 main(InputType input) : SV_TARGET
     for (uint i = 0; i < numLights; i++)
     {
         Light light = lights[i];
-        if (light.type == 0) // directional light
+        if (light.type == 0) // directional lights
         {
             if (hasDepthDataInMap(pTexCoord))
             {
                 if (!isInShadow(shadowMapTexture, pTexCoord, input.lightViewPos, shadowMapBias))
                 {
+                    dirLightColor += calculateSpecularLighting(-light.lightDirection, input.worldNormal, input.viewVector);
                     dirLightColor += calculateLighting(-light.lightDirection, input.worldNormal, light.diffuseColor);
                 }
             }
-            else // point light
+            else  // not in shadowmap, but we still want lighting
             {
+                dirLightColor += calculateSpecularLighting(-light.lightDirection, input.worldNormal, input.viewVector);
                 dirLightColor += calculateLighting(-light.lightDirection, input.worldNormal, light.diffuseColor);
             }
         }
-        else
+        else // point lights
         {
             // divide by 2 because I want attenuation to represent the max distance from the center of the light
             float distance = length(light.lightPosition - input.worldPos) / 2.f;

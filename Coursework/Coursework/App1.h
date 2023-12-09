@@ -43,7 +43,7 @@ private:
 	std::vector<SphereMesh*> lightMeshes;
 
 	// island variables
-	float islandHeight = 60.f;
+	float islandHeight = 45.f;
 	float texRes = 15.f;
 
 	// water variables
@@ -57,12 +57,12 @@ private:
 	float inside[2] = {32.f, 32.f};
 
 	// light variables
-	XMFLOAT3 lightDir = {1.f, -0.7f, 0.25f};
+	XMFLOAT3 lightDir = {1.f, -0.3f, 0.25f};
 	XMFLOAT3 dirLightPos = { 27.f, 50.f, 21.f };
 	XMFLOAT3 pointLightPos = { 40.f, 7.f, 20.f };
 
 	// shadow test variables
-	XMFLOAT3 testMeshPos = { 27.f, 7.f, 21.f };
+	XMFLOAT3 testMeshPos = { 27.f, 9.f, 21.f };
 
 	float elapsedTime = 0.f;
 

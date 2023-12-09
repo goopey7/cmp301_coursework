@@ -15,14 +15,18 @@ WaterShader::~WaterShader()
 		sampleState = 0;
 	}
 
-	// Release the matrix constant buffer.
 	if (waterBuffer)
 	{
 		waterBuffer->Release();
 		waterBuffer = 0;
 	}
 
-	// Release the matrix constant buffer.
+	if (camBuffer)
+	{
+		camBuffer->Release();
+		camBuffer = 0;
+	}
+
 	if (matrixBuffer)
 	{
 		matrixBuffer->Release();
@@ -54,6 +58,7 @@ void WaterShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	D3D11_BUFFER_DESC lightBufferDesc;
 	D3D11_BUFFER_DESC waterBufferDesc;
 	D3D11_BUFFER_DESC tesBufferDesc;
+	D3D11_BUFFER_DESC camBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
@@ -83,6 +88,14 @@ void WaterShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 	tesBufferDesc.MiscFlags = 0;
 	tesBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&tesBufferDesc, NULL, &tesBuffer);
+
+	camBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	camBufferDesc.ByteWidth = sizeof(CameraBufferType);
+	camBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	camBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	camBufferDesc.MiscFlags = 0;
+	camBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&camBufferDesc, NULL, &camBuffer);
 
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
@@ -123,7 +136,7 @@ void WaterShader::setShaderParameters(
 ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
 							 float* edges, float* inside, float time, float gravity, const std::vector<Wave>& waves,
-	const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap
+	const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap, XMFLOAT3 camPos
 )
 {
 	HRESULT result;
@@ -164,6 +177,13 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	tesData->inside = static_cast<XMFLOAT2>(inside);
 	deviceContext->Unmap(tesBuffer, 0);
 	deviceContext->HSSetConstantBuffers(0, 1, &tesBuffer);
+
+	CameraBufferType* camData;
+	result = deviceContext->Map(camBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	camData = (CameraBufferType*)mappedResource.pData;
+	camData->cameraPosition = camPos;
+	deviceContext->Unmap(camBuffer, 0);
+	deviceContext->DSSetConstantBuffers(2, 1, &camBuffer);
 
 	// Set shader texture resources
 	deviceContext->PSSetShaderResources(0, 1, &shadowMap);

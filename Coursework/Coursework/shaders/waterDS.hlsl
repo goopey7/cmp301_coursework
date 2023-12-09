@@ -25,6 +25,12 @@ cbuffer WaterBuffer : register(b1)
     float padding0;
 }
 
+cbuffer CamBuffer : register(b2)
+{
+    float3 cameraPos;
+    float padding1;
+}
+
 struct ConstantOutputType
 {
     float edges[4] : SV_TessFactor;
@@ -46,6 +52,7 @@ struct OutputType
     float4 depthPos : TEXCOORD2;
     float4 lightViewPos : TEXCOORD3;
     float3 worldNormal : TEXCOORD4;
+    float3 viewVector : TEXCOORD5;
 };
 
 float3 gerstnerWave(Wave wave, float3 pos, inout float3 tangent, inout float3 binormal)
@@ -118,6 +125,8 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
     output.lightViewPos = mul(float4(vertexPosition, 1.0f), worldMatrix);
     output.lightViewPos = mul(output.lightViewPos, lightViewMatrix);
     output.lightViewPos = mul(output.lightViewPos, lightProjectionMatrix);
+
+    //output.viewVector = normalize(cameraPos - output.worldPos);
 
     return output;
 }

@@ -13,7 +13,7 @@ class WaterShader : public BaseShader
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
 							 float* edges, float* inside, float time, float gravity, const std::vector<Wave>& waves,
-		const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap
+		const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap, XMFLOAT3 camPos
 		);
 
   private:
@@ -26,4 +26,5 @@ class WaterShader : public BaseShader
 	ID3D11Buffer* lightBuffer;
 	ID3D11Buffer* waterBuffer;
 	ID3D11Buffer* tesBuffer;
+	ID3D11Buffer* camBuffer;
 };

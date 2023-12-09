@@ -17,10 +17,9 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"waterHeight", L"res/Water_001_DISP.png");
 
 	// Create Mesh object and shader object
-	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1.f, 0.f, 0.f, 100.f, 100.f);
+	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 2.f, 0.f, 0.f, 100.f, 100.f);
 	islandShader = new IslandShader(renderer->getDevice(), hwnd);
-	//waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
-	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, 0.f, 0.f, 25.f, 25.f);
+	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
 	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
@@ -39,7 +38,17 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	waves.push_back(Wave());
 	waves[0].direction = { 1.f, 1.f };
 	waves[0].length = 10.f;
-	waves[0].steepness = 0.6f;
+	waves[0].steepness = 0.25f;
+
+	waves.push_back(Wave());
+	waves[1].direction = { 0.66f, 0.6f };
+	waves[1].length = 5.f;
+	waves[1].steepness = 0.25f;
+
+	waves.push_back(Wave());
+	waves[2].direction = { 0.78, 1.3f };
+	waves[2].length = 2.f;
+	waves[2].steepness = 0.25f;
 }
 
 App1::~App1()
@@ -191,7 +200,8 @@ void App1::finalPass()
 			waterGravity,
 			waves,
 			lights,
-		    shadowMap->getDepthMapSRV()
+		    shadowMap->getDepthMapSRV(),
+			camera->getPosition()
 		);
 
 		waterShader->render(ctx, waterMesh->getIndexCount());
@@ -248,6 +258,8 @@ void App1::gui()
 		}
 
 		ImGui::Text("Waves");
+		ImGui::Text("Don't let the sum of steepness values exceed 1.0 if you do you will see "
+					"looping artifacts");
 		ImGui::Separator();
 
 		for (size_t i = 0; i < waves.size(); i++)
