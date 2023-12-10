@@ -83,6 +83,10 @@ private:
 	float underwaterDisplacement = 0.004272f;
 	XMFLOAT3 underwaterColor = { 0.1f, 0.275f, 1.f };
 
+    float underwaterWeights[5] = { 0.38298f, 0.241732f, 0.060598f, 0.005977f, 0.000229f };
+	float blurAmount = 3.f;
+	XMFLOAT2 screenSize;
+
 	//underwater objects
 	PlaneMesh* islandUnderbellyMesh;
 	UnderbellyShader* underbellyShader;

@@ -7,7 +7,10 @@ public:
 	WaterPPShader(ID3D11Device* device, HWND hwnd);
 	~WaterPPShader();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, float timeElapsed, float frequency, float speed, float displacement, XMFLOAT3 waterTint);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
+							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
+							 ID3D11ShaderResourceView* texture, float timeElapsed, float frequency,
+							 float speed, float displacement, XMFLOAT3 waterTint, float weights[5], float blurAmount, XMFLOAT2 screenSize);
 
 private:
 	void initShader(const wchar_t* vs, const wchar_t* ps, const wchar_t* dps);

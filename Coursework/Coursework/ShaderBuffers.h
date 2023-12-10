@@ -73,6 +73,13 @@ struct WaterPPBufferType
 	float speed;
 	float displacement;
 	XMFLOAT3 waterTint;
+	float weight0;
+	float weight1;
+	float weight2;
+	float weight3;
+	float weight4;
+	float blurAmount;
+	XMFLOAT2 screenSize;
 	float padding;
 };
 

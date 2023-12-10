@@ -58,6 +58,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	waves[2].direction = { 0.78, 1.3f };
 	waves[2].length = 2.f;
 	waves[2].steepness = 0.25f;
+
+	screenSize = { (float)screenWidth, (float)screenHeight };
 }
 
 App1::~App1()
@@ -196,20 +198,6 @@ void App1::sceneToTexturePass()
 	underbellyShader->render(ctx, islandUnderbellyMesh->getIndexCount());
 	renderer->setFrontCulling(false);
 	worldMatrix = renderer->getWorldMatrix();
-	/*
-	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
-	{
-		islandMesh->sendData(ctx, i);
-		islandShader->setShaderParameters(
-			ctx, worldMatrix, viewMatrix, projectionMatrix,
-			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"),
-			shadowMap->getDepthMapSRV(),
-			lights, edges, inside, texRes, islandHeight
-		);
-
-		islandShader->render(ctx, islandMesh->getIndexCount());
-	}
-	*/
 
 	if (camera->getPosition().y > 0.6f)
 	{
@@ -228,6 +216,7 @@ void App1::sceneToTexturePass()
 	}
 
 	// render test sphere
+	worldMatrix = renderer->getWorldMatrix();
 	renderer->setAlphaBlending(true);
 	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
 	shadowTestMesh->sendData(ctx);
@@ -265,7 +254,8 @@ void App1::finalPass()
 	{
 		waterPPShader->setShaderParameters(ctx, worldMatrix, orthoViewMatrix, orthoMatrix,
 										   renderTexture->getShaderResourceView(), elapsedTime,
-			underwaterFreq, underwaterSpeed, underwaterDisplacement, underwaterColor
+										   underwaterFreq, underwaterSpeed, underwaterDisplacement,
+										   underwaterColor, underwaterWeights, blurAmount, screenSize
 			);
 		waterPPShader->render(ctx, orthoMesh->getIndexCount());
 	}
@@ -342,10 +332,23 @@ void App1::gui()
 	ImGui::End();
 
 	ImGui::Begin("Underwater");
-		ImGui::SliderFloat3("UnderwaterColor", (float*)&underwaterColor, 0.f, 1.f);
-		ImGui::SliderFloat("UnderwaterFreq", &underwaterFreq, 0.f, 250.f);
-		ImGui::SliderFloat("UnderwaterSpeed", &underwaterSpeed, 0.f, 5.f);
-		ImGui::SliderFloat("UnderwaterDisplacement", &underwaterDisplacement, 0.f, 0.01f, "%.6f");
+		ImGui::Text("Color");
+			ImGui::SliderFloat3("UnderwaterColor", (float*)&underwaterColor, 0.f, 1.f);
+		ImGui::Separator();
+		ImGui::Text("Wavy distortion");
+			ImGui::SliderFloat("UnderwaterFreq", &underwaterFreq, 0.f, 250.f);
+			ImGui::SliderFloat("UnderwaterSpeed", &underwaterSpeed, 0.f, 5.f);
+			ImGui::SliderFloat("UnderwaterDisplacement", &underwaterDisplacement, 0.f, 0.01f, "%.6f");
+		ImGui::Separator();
+		ImGui::Text("Blur");
+			ImGui::SliderFloat("UnderwaterBlurAmount", &blurAmount, 0.f, 10.f);
+			ImGui::SliderFloat("UnderwaterWeight0", &underwaterWeights[0], 0.f, 1.f, "%.6f");
+			ImGui::SliderFloat("UnderwaterWeight1", &underwaterWeights[1], 0.f, 1.f, "%.6f");
+			ImGui::SliderFloat("UnderwaterWeight2", &underwaterWeights[2], 0.f, 1.f, "%.6f");
+			ImGui::SliderFloat("UnderwaterWeight3", &underwaterWeights[3], 0.f, 1.f, "%.6f");
+			ImGui::SliderFloat("UnderwaterWeight4", &underwaterWeights[4], 0.f, 1.f, "%.6f");
+		ImGui::Text("screen size: %f, %f", screenSize.x, screenSize.y);
+		ImGui::Separator();
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");

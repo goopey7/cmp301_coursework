@@ -67,9 +67,13 @@ void WaterPPShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilen
 	renderer->CreateSamplerState(&samplerDesc, &sampleState);
 }
 
-void WaterPPShader::setShaderParameters(
-ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, float timeElapsed, float frequency, float speed, float displacement, XMFLOAT3 waterTint
-)
+void WaterPPShader::setShaderParameters(ID3D11DeviceContext* deviceContext,
+										const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
+										const XMMATRIX& projectionMatrix,
+										ID3D11ShaderResourceView* texture, float timeElapsed,
+										float frequency, float speed, float displacement,
+										XMFLOAT3 waterTint, float weights[5], float blurAmount,
+										XMFLOAT2 screenSize)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -98,6 +102,13 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX 
 	waterDataPtr->speed = speed;
 	waterDataPtr->displacement = displacement;
 	waterDataPtr->waterTint = waterTint;
+	waterDataPtr->weight0 = weights[0];
+	waterDataPtr->weight1 = weights[1];
+	waterDataPtr->weight2 = weights[2];
+	waterDataPtr->weight3 = weights[3];
+	waterDataPtr->weight4 = weights[4];
+	waterDataPtr->blurAmount = blurAmount;
+	waterDataPtr->screenSize = screenSize;
 	deviceContext->Unmap(waterPPBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &waterPPBuffer);
 
