@@ -220,6 +220,7 @@ void D3D::createDefaultRasterState()
 
 	//create raster state with wireframe enabled
 	rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+	rasterDesc.CullMode = D3D11_CULL_BACK;
 	device->CreateRasterizerState(&rasterDesc, &rasterStateWF);
 
 	// Setup the viewport for rendering.
