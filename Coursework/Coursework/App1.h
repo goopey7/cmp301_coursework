@@ -94,6 +94,16 @@ private:
 
 	RenderTexture* finalRenderTexture;
 	XMFLOAT4 clearColor = { 0.39f, 0.58, 0.92f, 1.f };
+
+	// gui
+	ImVec2 clientSize;
+
+	// Setup the projection matrix.
+	float fieldOfView = (float)XM_PI / 4.0f;
+	float screenAspect = 1920.f / 1080.f;
+
+	// Create the projection matrix for 3D rendering.
+	XMMATRIX projectionMatrix;
 };
 
 #endif

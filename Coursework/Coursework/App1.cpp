@@ -63,6 +63,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	waves[2].steepness = 0.25f;
 
 	screenSize = { (float)screenWidth, (float)screenHeight };
+
+	projectionMatrix = XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, SCREEN_NEAR, SCREEN_DEPTH);
 }
 
 App1::~App1()
@@ -168,13 +170,12 @@ void App1::depthPass()
 
 void App1::sceneToTexturePass()
 {
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
+	XMMATRIX worldMatrix, viewMatrix;
 
 	// Get the world, view, projection, and ortho matrices from the camera and
 	// Direct3D objects.
 	worldMatrix = renderer->getWorldMatrix();
 	viewMatrix = camera->getViewMatrix();
-	projectionMatrix = renderer->getProjectionMatrix();
 
 	auto ctx = renderer->getDeviceContext();
 	renderTexture->setRenderTarget(ctx);
@@ -305,7 +306,7 @@ void App1::gui()
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
 	ImGui::Begin("Dockspace", nullptr,
-				 ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
+					 ImGuiWindowFlags_NoDocking |
 					 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
 					 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
 					 ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus);
@@ -314,9 +315,12 @@ void App1::gui()
 	ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 	ImGui::End();
 
-	ImGui::Begin("Debug");
-		ImGui::Text("FPS: %.2f", timer->getFPS());
+	ImGui::BeginMainMenuBar();
+		ImGui::Text("%.2f FPS", timer->getFPS());
 		ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+	ImGui::EndMainMenuBar();
+
+	ImGui::Begin("Debug");
 		ImGui::SliderFloat4("Edges", edges, 1.f, 64.f);
 		ImGui::SliderFloat2("Inside", inside, 1.f, 64.f);
 		ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
@@ -377,7 +381,6 @@ void App1::gui()
 			ImGui::SliderFloat("UnderwaterWeight2", &underwaterWeights[2], 0.f, 1.f, "%.6f");
 			ImGui::SliderFloat("UnderwaterWeight3", &underwaterWeights[3], 0.f, 1.f, "%.6f");
 			ImGui::SliderFloat("UnderwaterWeight4", &underwaterWeights[4], 0.f, 1.f, "%.6f");
-		ImGui::Text("screen size: %f, %f", screenSize.x, screenSize.y);
 		ImGui::Separator();
 	ImGui::End();
 
@@ -398,6 +401,25 @@ void App1::gui()
 		min.x += ImGui::GetWindowPos().x;
 		min.y += ImGui::GetWindowPos().y;
 		ImVec2 viewportSize = {max.x - min.x, max.y - min.y};
+		if (clientSize.x != viewportSize.x || clientSize.y != viewportSize.y)
+		{
+			clientSize = viewportSize;
+			if (finalRenderTexture)
+			{
+				delete finalRenderTexture;
+				finalRenderTexture = 0;
+			}
+			finalRenderTexture = new RenderTexture(renderer->getDevice(), viewportSize.x, viewportSize.y, SCREEN_NEAR,
+																  SCREEN_DEPTH);
+
+			FPCamera* oldCam = camera;
+			camera = new FPCamera(input, viewportSize.x, viewportSize.y, wnd);
+			camera->setPosition(oldCam->getPosition().x, oldCam->getPosition().y, oldCam->getPosition().z);
+			camera->update();
+			delete oldCam;
+
+			projectionMatrix = XMMatrixPerspectiveFovLH(fieldOfView, viewportSize.x / viewportSize.y, SCREEN_NEAR, SCREEN_DEPTH);
+		}
 		ImGui::Image(finalRenderTexture->getShaderResourceView(), viewportSize);
 	ImGui::PopStyleColor();
 	ImGui::End();
