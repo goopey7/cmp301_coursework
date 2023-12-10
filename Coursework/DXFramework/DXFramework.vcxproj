@@ -177,6 +177,9 @@
     <ClInclude Include="..\include\imGUI\imgui_impl_dx11.h" />
     <ClInclude Include="..\include\imGUI\imgui_impl_win32.h" />
     <ClInclude Include="..\include\imGUI\imgui_internal.h" />
+    <ClInclude Include="..\include\imGUI\imstb_rectpack.h" />
+    <ClInclude Include="..\include\imGUI\imstb_textedit.h" />
+    <ClInclude Include="..\include\imGUI\imstb_truetype.h" />
     <ClInclude Include="..\include\imGUI\stb_rect_pack.h" />
     <ClInclude Include="..\include\imGUI\stb_textedit.h" />
     <ClInclude Include="..\include\imGUI\stb_truetype.h" />
@@ -212,6 +215,8 @@
     <ClCompile Include="..\include\imGUI\imgui_draw.cpp" />
     <ClCompile Include="..\include\imGUI\imgui_impl_dx11.cpp" />
     <ClCompile Include="..\include\imGUI\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\include\imGUI\imgui_tables.cpp" />
+    <ClCompile Include="..\include\imGUI\imgui_widgets.cpp" />
     <ClCompile Include="AModel.cpp" />
     <ClCompile Include="BaseApplication.cpp" />
     <ClCompile Include="BaseMesh.cpp" />

@@ -19,6 +19,9 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	renderTexture = new RenderTexture(renderer->getDevice(), screenWidth, screenHeight, SCREEN_NEAR,
 									  SCREEN_DEPTH);
 
+	finalRenderTexture = new RenderTexture(renderer->getDevice(), screenWidth, screenHeight, SCREEN_NEAR,
+									  SCREEN_DEPTH);
+
 	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth, screenHeight, 0, 0);
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
 	waterPPShader = new WaterPPShader(renderer->getDevice(), hwnd);
@@ -175,7 +178,7 @@ void App1::sceneToTexturePass()
 
 	auto ctx = renderer->getDeviceContext();
 	renderTexture->setRenderTarget(ctx);
-	renderTexture->clearRenderTarget(ctx, 0.39f, 0.58f, 0.92f, 0.2f);
+	renderTexture->clearRenderTarget(ctx, clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 
 	for (size_t i = 0; i < islandMesh->getQuadrants(); i++)
 	{
@@ -232,16 +235,15 @@ void App1::finalPass()
 {
 	renderer->setWireframeMode(false);
 
-	// Clear the scene. (default blue colour)
-	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
+	ID3D11DeviceContext* ctx = renderer->getDeviceContext();
+	finalRenderTexture->setRenderTarget(ctx);
+	finalRenderTexture->clearRenderTarget(ctx, clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();
 	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();
 
 	renderer->setZBuffer(false);
-
-	auto ctx = renderer->getDeviceContext();
 	orthoMesh->sendData(ctx);
 
 	if (camera->getPosition().y > 0.6f)
@@ -263,17 +265,25 @@ void App1::finalPass()
 	renderer->setZBuffer(true);
 
 	renderer->setWireframeMode(wireframeToggle);
+
+	// reset render target back to the swapchain back-buffer and not the render texture
+	renderer->setBackBufferRenderTarget();
 }
 
 bool App1::render()
 {
 	depthPass();
 	sceneToTexturePass();
+
+	// Clear the scene. (default blue colour)
+	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
 	finalPass();
 
 	gui();
 
 	renderer->endScene();
+	ImGui::UpdatePlatformWindows();
+	ImGui::EndFrame();
 
 	return true;
 }
@@ -286,12 +296,32 @@ void App1::gui()
 	renderer->getDeviceContext()->DSSetShader(NULL, NULL, 0);
 
 	// Build UI
-	ImGui::Text("FPS: %.2f", timer->getFPS());
-	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
-	ImGui::SliderFloat4("Edges", edges, 1.f, 64.f);
-	ImGui::SliderFloat2("Inside", inside, 1.f, 64.f);
-	ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
-	ImGui::DragFloat3("CameraPos", (float*)&camera->getPosition(), -100.f, 100.f);
+	// build dockspace
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowSize(viewport->WorkSize);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+	ImGui::Begin("Dockspace", nullptr,
+				 ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
+					 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+					 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+					 ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus);
+	ImGui::PopStyleVar(2);
+	ImGuiID dockspaceID = ImGui::GetID("Dockspace");
+	ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+	ImGui::End();
+
+	ImGui::Begin("Debug");
+		ImGui::Text("FPS: %.2f", timer->getFPS());
+		ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+		ImGui::SliderFloat4("Edges", edges, 1.f, 64.f);
+		ImGui::SliderFloat2("Inside", inside, 1.f, 64.f);
+		ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
+		ImGui::DragFloat3("CameraPos", (float*)&camera->getPosition(), -100.f, 100.f);
+	ImGui::End();
 
 	ImGui::Begin("Lighting");
 		ImGui::SliderFloat3("LightDir", (float*)&lightDir, -1.f, 1.f);
@@ -354,6 +384,22 @@ void App1::gui()
 	ImGui::Begin("ShadowMap");
 		ImGui::Image(shadowMap->getDepthMapSRV(), ImVec2(256, 256));
 		ImGui::SliderFloat3("TestMeshPos", (float*)&testMeshPos, -100.f, 100.f);
+	ImGui::End();
+
+	ImGui::SetNextWindowBgAlpha(1.f);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(clearColor.x, clearColor.y, clearColor.z, clearColor.w));
+	ImGui::Begin("Viewport", nullptr,
+				 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+					 ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_HorizontalScrollbar);
+		ImVec2 max = ImGui::GetWindowContentRegionMax();
+		ImVec2 min = ImGui::GetWindowContentRegionMin();
+		max.x += ImGui::GetWindowPos().x;
+		max.y += ImGui::GetWindowPos().y;
+		min.x += ImGui::GetWindowPos().x;
+		min.y += ImGui::GetWindowPos().y;
+		ImVec2 viewportSize = {max.x - min.x, max.y - min.y};
+		ImGui::Image(finalRenderTexture->getShaderResourceView(), viewportSize);
+	ImGui::PopStyleColor();
 	ImGui::End();
 
 	// Render UI

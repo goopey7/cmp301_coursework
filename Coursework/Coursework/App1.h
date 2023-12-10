@@ -91,6 +91,9 @@ private:
 	PlaneMesh* islandUnderbellyMesh;
 	UnderbellyShader* underbellyShader;
 	XMVECTOR underbellyPos = { 0.f, .6f, -50.f };
+
+	RenderTexture* finalRenderTexture;
+	XMFLOAT4 clearColor = { 0.39f, 0.58, 0.92f, 1.f };
 };
 
 #endif

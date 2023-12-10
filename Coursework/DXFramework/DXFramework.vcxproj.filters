@@ -114,10 +114,13 @@
     <ClInclude Include="AModel.h">
       <Filter>Header Files\Geometry</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\imGUI\imconfig.h">
+    <ClInclude Include="..\include\imGUI\stb_rect_pack.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\imGUI\imgui.h">
+    <ClInclude Include="..\include\imGUI\stb_textedit.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\imGUI\stb_truetype.h">
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\include\imGUI\imgui_impl_dx11.h">
@@ -129,13 +132,19 @@
     <ClInclude Include="..\include\imGUI\imgui_internal.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\imGUI\stb_rect_pack.h">
+    <ClInclude Include="..\include\imGUI\imstb_rectpack.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\imGUI\stb_textedit.h">
+    <ClInclude Include="..\include\imGUI\imstb_textedit.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\imGUI\stb_truetype.h">
+    <ClInclude Include="..\include\imGUI\imstb_truetype.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\imGUI\imconfig.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\imGUI\imgui.h">
       <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -212,6 +221,15 @@
     <ClCompile Include="AModel.cpp">
       <Filter>Source Files\Geometry</Filter>
     </ClCompile>
+    <ClCompile Include="..\include\imGUI\imgui_impl_win32.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\include\imGUI\imgui_tables.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\include\imGUI\imgui_widgets.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
     <ClCompile Include="..\include\imGUI\imgui.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
@@ -222,9 +240,6 @@
       <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="..\include\imGUI\imgui_impl_dx11.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="..\include\imGUI\imgui_impl_win32.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
   </ItemGroup>
