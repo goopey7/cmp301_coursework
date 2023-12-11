@@ -9,8 +9,8 @@ struct ShadowMatrixBufferType
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
-	XMMATRIX lightView;
-	XMMATRIX lightProjection;
+	XMMATRIX lightViews[7];
+	XMMATRIX lightProjections[7];
 };
 
 struct LightBufferType
@@ -21,8 +21,6 @@ struct LightBufferType
 	XMFLOAT4 ambient;
 	XMFLOAT3 position;
 	float attenuation;
-	uint32_t shadowMaps;
-	XMFLOAT3 padding;
 };
 
 struct LightsBufferType

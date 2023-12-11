@@ -124,9 +124,9 @@ bool App1::frame()
 
 void App1::update(float dt)
 {
-	lm->getLight(1)->setDirection(lightDir);
-	lm->getLight(1)->setPosition(dirLightPos);
-	lm->getLight(0)->setPosition(pointLightPos);
+	lm->getLight(0)->setDirection(lightDir);
+	lm->getLight(0)->setPosition(dirLightPos);
+	lm->getLight(1)->setPosition(pointLightPos);
 
 	elapsedTime += timer->getTime();
 
@@ -216,7 +216,7 @@ void App1::sceneToTexturePass()
 		islandMesh->sendData(ctx, i);
 		islandShader->setShaderParameters(
 			renderer->getDevice(), ctx, worldMatrix, viewMatrix, projectionMatrix,
-			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"), lm->getDepthMapSRV(),
+			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"),
 			lm, edges, inside, texRes, islandHeight
 		);
 
@@ -429,7 +429,7 @@ void App1::gui()
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");
-		ImGui::Image(lm->getDepthMapSRV(), ImVec2(256, 256));
+		ImGui::Image(lm->getDepthMapSRV(0)[0], ImVec2(256, 256));
 		ImGui::SliderFloat3("TestMeshPos", (float*)&testMeshPos, -100.f, 100.f);
 	ImGui::End();
 

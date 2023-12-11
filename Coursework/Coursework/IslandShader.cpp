@@ -138,7 +138,7 @@ void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_
 void IslandShader::setShaderParameters(
 	ID3D11Device* device, ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1,
-	ID3D11ShaderResourceView* heightMap, ID3D11ShaderResourceView* shadowMap,
+	ID3D11ShaderResourceView* heightMap,
 	LightManager* lm, float* edges, float* inside, float texRes, float height)
 {
 	HRESULT result;
@@ -156,8 +156,12 @@ void IslandShader::setShaderParameters(
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	dataPtr->lightView = XMMatrixTranspose(lm->getLight(1)->getViewMatrix());
-	dataPtr->lightProjection = XMMatrixTranspose(lm->getLight(1)->getOrthoMatrix());
+	for (size_t i = 0; i < lm->getLights().size(); i++)
+	{
+		auto light = lm->getLight(i);
+		dataPtr->lightViews[i] = XMMatrixTranspose(light->getViewMatrix());
+		dataPtr->lightProjections[i] = XMMatrixTranspose(light->getOrthoMatrix());
+	}
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -200,7 +204,17 @@ void IslandShader::setShaderParameters(
 	deviceContext->PSSetShaderResources(0, 1, &texture0);
 	deviceContext->PSSetShaderResources(1, 1, &texture1);
 	deviceContext->PSSetShaderResources(2, 1, &heightMap);
-	deviceContext->PSSetShaderResources(3, 1, &shadowMap);
+
+	size_t smapIndex = 3;
+	for (size_t i = 0; i < lm->getLights().size(); i++)
+	{
+		auto shadowMaps = lm->getDepthMapSRV(i);
+		for (size_t j = 0; j < shadowMaps.size(); j++)
+		{
+			deviceContext->PSSetShaderResources(smapIndex, 1, &shadowMaps[j]);
+			smapIndex++;
+		}
+	}
 
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
@@ -229,8 +243,6 @@ void IslandShader::setDepthShaderParameters(
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	dataPtr->lightView = tproj;
-	dataPtr->lightProjection = tproj;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 

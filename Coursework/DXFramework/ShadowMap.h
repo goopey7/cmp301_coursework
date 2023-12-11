@@ -5,16 +5,15 @@ using namespace DirectX;
 
 class ShadowMap
 {
-public:
+  public:
 	ShadowMap(ID3D11Device* device, int mWidth, int mHeight);
 	~ShadowMap();
 
-	void BindDsvAndSetNullRenderTarget(ID3D11DeviceContext* dc, int index);
-	ID3D11DepthStencilView* getDSV(int index);
+	void BindDsvAndSetNullRenderTarget(ID3D11DeviceContext* dc);
 	ID3D11ShaderResourceView* getDepthMapSRV() { return mDepthMapSRV; };
 
-private:
-	std::vector<ID3D11DepthStencilView*> mDepthMapDSV;
+  private:
+	ID3D11DepthStencilView* mDepthMapDSV;
 	ID3D11ShaderResourceView* mDepthMapSRV;
 	D3D11_VIEWPORT viewport;
 	ID3D11RenderTargetView* renderTargets[1];

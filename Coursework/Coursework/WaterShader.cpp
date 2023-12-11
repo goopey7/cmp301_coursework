@@ -154,8 +154,8 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	dataPtr->lightView = XMMatrixTranspose(lm->getLight(1)->getViewMatrix());
-	dataPtr->lightProjection = XMMatrixTranspose(lm->getLight(1)->getOrthoMatrix());
+	//dataPtr->lightView = XMMatrixTranspose(lm->getLight(1)->getViewMatrix());
+	//dataPtr->lightProjection = XMMatrixTranspose(lm->getLight(1)->getOrthoMatrix());
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 

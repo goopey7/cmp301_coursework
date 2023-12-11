@@ -1,7 +1,14 @@
 Texture2D texture0 : register(t0);
 Texture2D texture1 : register(t1);
 Texture2D heightMap : register(t2);
-Texture2DArray depthMapTextures : register(t3);
+
+Texture2D depthMapTexture0 : register(t3);
+Texture2D depthMapTexture1 : register(t4);
+Texture2D depthMapTexture2 : register(t5);
+Texture2D depthMapTexture3 : register(t6);
+Texture2D depthMapTexture4 : register(t7);
+Texture2D depthMapTexture5 : register(t8);
+Texture2D depthMapTexture6 : register(t9);
 
 SamplerState sampler0 : register(s0);
 SamplerState shadowSampler : register(s1);
@@ -14,8 +21,6 @@ struct Light
     float4 ambientColor;
     float3 lightPosition;
     float attenuation;
-    uint shadowMaps;
-    float3 padding;
 };
 
 cbuffer LightBuffer : register(b0)
@@ -39,7 +44,7 @@ struct InputType
     float height : COLOR;
 	float3 worldPos : TEXCOORD1;
     float4 depthPos : TEXCOORD2;
-    float4 lightViewPos : TEXCOORD3;
+    float4 lightViewPos[7] : TEXCOORD3;
 };
 
 float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
@@ -68,9 +73,9 @@ bool hasDepthDataInMap(float2 uv)
     return uv.x >= 0.f && uv.x <= 1.f && uv.y >= 0.f && uv.y <= 1.f;
 }
 
-bool isInShadow(Texture2DArray sMap, float2 uv, float4 lightViewPosition, float bias)
+bool isInShadow(Texture2D sMap, float2 uv, float4 lightViewPosition, float bias)
 {
-    float depthValue = sMap.Sample(shadowSampler, float3(uv, 6)).r;
+    float depthValue = sMap.Sample(shadowSampler, uv).r;
     float lightDepthValue = lightViewPosition.z / lightViewPosition.w;
     lightDepthValue -= bias;
 
@@ -125,16 +130,16 @@ float4 main(InputType input) : SV_TARGET
     float4 dirLightColor = float4(0.f, 0.f, 0.f, 1.f);
 
     float shadowMapBias = 0.005f;
-    float2 pTexCoord = getProjectiveCoords(input.lightViewPos);
     
     for (uint i = 0; i < numLights; i++)
     {
         Light light = lights[i];
         if (light.type == 0) // directional light
         {
+            float2 pTexCoord = getProjectiveCoords(input.lightViewPos[0]);
             if (hasDepthDataInMap(pTexCoord))
             {
-                if (!isInShadow(depthMapTextures, pTexCoord, input.lightViewPos, shadowMapBias))
+                if (!isInShadow(depthMapTexture0, pTexCoord, input.lightViewPos[0], shadowMapBias))
                 {
                     dirLightColor += calculateLighting(-light.lightDirection, normal, light.diffuseColor);
                 }
@@ -142,12 +147,34 @@ float4 main(InputType input) : SV_TARGET
         }
         else // point light
         {
-            // divide by 2 because I want attenuation to represent the max distance from the center of the light
-            float distance = length(light.lightPosition - input.worldPos) / 2.f;
+            bool inShadow = false;
+            for (uint i = 1; i < 7; i++)
+            {
+                float2 pTexCoord = getProjectiveCoords(input.lightViewPos[i]);
+                if (hasDepthDataInMap(pTexCoord))
+                {
+                    if (
+                        (i != 1 || (i == 1 && isInShadow(depthMapTexture1, pTexCoord, input.lightViewPos[i], shadowMapBias)))
+                        && (i != 2 || (i == 2 && isInShadow(depthMapTexture2, pTexCoord, input.lightViewPos[i], shadowMapBias)))
+                        && (i != 3 || (i == 3 && isInShadow(depthMapTexture3, pTexCoord, input.lightViewPos[i], shadowMapBias)))
+                        && (i != 4 || (i == 4 && isInShadow(depthMapTexture4, pTexCoord, input.lightViewPos[i], shadowMapBias)))
+                        && (i != 5 || (i == 5 && isInShadow(depthMapTexture5, pTexCoord, input.lightViewPos[i], shadowMapBias)))
+                        && (i != 6 || (i == 6 && isInShadow(depthMapTexture6, pTexCoord, input.lightViewPos[i], shadowMapBias)))
+                        )
+                    {
+                        inShadow = true;
+                    }
+                }
+            }
+            if (!inShadow)
+            {
+                // divide by 2 because I want attenuation to represent the max distance from the center of the light
+                float distance = length(light.lightPosition - input.worldPos) / 2.f;
 
-            // gradual quadratic falloff depending on distance from the light
-            float att = pow(saturate(1.0 - pow(distance / 5.f, 2)), 2);
-            pointLightColor += att * calculateLighting(normalize(light.lightPosition - input.worldPos), normal, light.diffuseColor);
+                // gradual quadratic falloff depending on distance from the light
+                float att = pow(saturate(1.0 - pow(distance / 5.f, 2)), 2);
+                pointLightColor += att * calculateLighting(normalize(light.lightPosition - input.worldPos), normal, light.diffuseColor);
+            }
         }
     }
     return (lights[0].ambientColor + (dirLightColor + pointLightColor)) * terrainColor;
