@@ -104,12 +104,7 @@ private:
 
 	// Create the projection matrix for 3D rendering.
 	XMMATRIX projectionMatrix;
-
-	XMFLOAT3 pointLightDirections[6] = {{1.f, 0.f, 0.f},  {-1.f, 0.f, 0.f}, {0.f, 1.f, 0.f},
-										{0.f, -1.f, 0.f}, {0.f, 0.f, 1.f},	{0.f, 0.f, -1.f}};
-
 	LightManager* lm;
-
 };
 
 #endif

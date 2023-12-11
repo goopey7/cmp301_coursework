@@ -16,14 +16,19 @@ class LightBase
 		operator Light*() { return &light; }
 		LightBufferType getConstBuffer()
 		{
-			return LightBufferType {
+			LightBufferType lbType = LightBufferType {
 				light.getDiffuseColour(),
 				light.getDirection(),
 				(uint32_t)type,
 				light.getAmbientColour(),
 				light.getPosition(),
-				attenuation
+				attenuation,
 			};
+
+			lbType.shadowMapStart = (uint32_t)shadowMapIndex;
+			lbType.shadowMapEnd = (uint32_t)shadowMapIndex + (uint32_t)shadowMapCount;
+
+			return lbType;
 		}
 
 		void generateViewMatrix()
@@ -54,11 +59,20 @@ class LightBase
 		XMFLOAT3 getDirection() const { return light.getDirection(); }
 		size_t getShadowMapCount() const { return shadowMapCount; }
 		size_t getShadowMapIndex() const { return shadowMapIndex; }
+		XMMATRIX getPointLightViewMatrix(size_t index)
+		{
+			XMFLOAT3 d = pointLightDirections[index];
+			light.setDirection(d.x, d.y, d.z);
+			light.generateViewMatrix();
+			return light.getViewMatrix();
+		}
   protected:
 	  Light light;
 	  LightType type;
 	  float attenuation = FLT_MAX;
 	  size_t shadowMapCount;
 	  size_t shadowMapIndex;
+	  XMFLOAT3 pointLightDirections[6] = {{1.f, 0.f, 0.f},  {-1.f, 0.f, 0.f}, {0.f, 1.f, 0.f},
+										{0.f, -1.f, 0.f}, {0.f, 0.f, 1.f},	{0.f, 0.f, -1.f}};
 };
 

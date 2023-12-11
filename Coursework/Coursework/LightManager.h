@@ -2,22 +2,20 @@
 
 #include "PointLight.h"
 #include "DirectionLight.h"
+#include "ShadowMapArray.h"
 
 class LightManager
 {
 public:
 	LightManager(ID3D11Device* device) : device(device)
 	{
-		for (size_t i = 0; i < 7; i++)
-		{
-			shadowMaps.push_back(new ShadowMap(device, 1024, 1024));
-		}
+		shadowMaps = new ShadowMapArray(device, 2048, 2048);
 	}
 
 	~LightManager()
 	{ 
 		for (auto light : lights) delete light;
-		for (auto sm : shadowMaps) delete sm;
+		delete shadowMaps;
 	}
 
 	void addPointLight()
@@ -44,22 +42,12 @@ public:
 
 	void bindDsvAndSetNullRenderTarget(ID3D11DeviceContext* deviceContext, int index)
 	{
-		shadowMaps[index]->BindDsvAndSetNullRenderTarget(deviceContext);
+		shadowMaps->BindDsvAndSetNullRenderTarget(deviceContext, index);
 	}
 
-	std::vector<ID3D11ShaderResourceView*> getDepthMapSRV(int index)
+	ID3D11ShaderResourceView* getDepthMapSRV()
 	{
-		LightBase* light = lights[index];
-		auto begin = light->getShadowMapIndex();
-		auto end = begin + light->getShadowMapCount();
-
-		std::vector<ID3D11ShaderResourceView*> srvs;
-		for (int i = begin; i < end; i++)
-		{
-			srvs.push_back(shadowMaps[i]->getDepthMapSRV());
-		}
-
-		return srvs;
+		return shadowMaps->getDepthMapArraySRV();
 	}
 
 	LightBase* getLight(size_t index) { return lights[index]; }
@@ -70,6 +58,6 @@ public:
   private:
 	std::vector<LightBase*> lights;
 	ID3D11Device* device;
-	std::vector<ShadowMap*> shadowMaps;
+	ShadowMapArray* shadowMaps;
 	size_t nextShadowMapIndex = 0;
 };

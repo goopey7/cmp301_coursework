@@ -175,14 +175,13 @@ void App1::depthPass()
 			renderer->resetViewport();
 			break;
 		case LightType::Point:
+		{
+			int dir = 0;
 			for (int i = shadowMaps.first; i < shadowMaps.second; i++)
 			{
 				lm->bindDsvAndSetNullRenderTarget(ctx, i);
 
-				light->setDirection(pointLightDirections[(shadowMaps.second - 1) - shadowMaps.first]);
-
-				light->generateViewMatrix();
-				XMMATRIX lightViewMatrix = light->getViewMatrix();
+				XMMATRIX lightViewMatrix = light->getPointLightViewMatrix(dir);
 				XMMATRIX lightProjMatrix = light->getOrthoMatrix();
 				XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
@@ -190,8 +189,10 @@ void App1::depthPass()
 
 				renderer->setBackBufferRenderTarget();
 				renderer->resetViewport();
+				dir++;
 			}
 			break;
+		}
 		case LightType::Spot:
 				break;
 		}
@@ -429,7 +430,7 @@ void App1::gui()
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");
-		ImGui::Image(lm->getDepthMapSRV(0)[0], ImVec2(256, 256));
+		ImGui::Image(lm->getDepthMapSRV(), ImVec2(256, 256));
 		ImGui::SliderFloat3("TestMeshPos", (float*)&testMeshPos, -100.f, 100.f);
 	ImGui::End();
 

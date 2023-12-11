@@ -159,8 +159,25 @@ void IslandShader::setShaderParameters(
 	for (size_t i = 0; i < lm->getLights().size(); i++)
 	{
 		auto light = lm->getLight(i);
-		dataPtr->lightViews[i] = XMMatrixTranspose(light->getViewMatrix());
-		dataPtr->lightProjections[i] = XMMatrixTranspose(light->getOrthoMatrix());
+		switch (light->getType())
+		{
+		case LightType::Directional:
+			dataPtr->lightViews[light->getShadowMapIndex()] = XMMatrixTranspose(light->getViewMatrix());
+			dataPtr->lightProjections[light->getShadowMapIndex()] = XMMatrixTranspose(light->getOrthoMatrix());
+			break;
+		case LightType::Point:
+		{
+			int dir = 0;
+			for (int j = light->getShadowMapIndex();
+				 j < light->getShadowMapIndex() + light->getShadowMapCount(); j++)
+			{
+				dataPtr->lightViews[j] = XMMatrixTranspose(light->getPointLightViewMatrix(dir));
+				dataPtr->lightProjections[j] = XMMatrixTranspose(light->getOrthoMatrix());
+				dir++;
+			}
+			break;
+		}
+		}
 	}
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
@@ -205,16 +222,8 @@ void IslandShader::setShaderParameters(
 	deviceContext->PSSetShaderResources(1, 1, &texture1);
 	deviceContext->PSSetShaderResources(2, 1, &heightMap);
 
-	size_t smapIndex = 3;
-	for (size_t i = 0; i < lm->getLights().size(); i++)
-	{
-		auto shadowMaps = lm->getDepthMapSRV(i);
-		for (size_t j = 0; j < shadowMaps.size(); j++)
-		{
-			deviceContext->PSSetShaderResources(smapIndex, 1, &shadowMaps[j]);
-			smapIndex++;
-		}
-	}
+	ID3D11ShaderResourceView* shadowMaps = lm->getDepthMapSRV();
+	deviceContext->PSSetShaderResources(3, 1, &shadowMaps);
 
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);

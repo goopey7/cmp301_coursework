@@ -170,6 +170,7 @@
     <ClCompile Include="IslandShader.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="ShadowMapArray.cpp" />
     <ClCompile Include="TesselatedPlaneMesh.cpp" />
     <ClCompile Include="TextureShader.cpp" />
     <ClCompile Include="UnderbellyShader.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="LightManager.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="ShaderBuffers.h" />
+    <ClInclude Include="ShadowMapArray.h" />
     <ClInclude Include="TesselatedPlaneMesh.h" />
     <ClInclude Include="TextureShader.h" />
     <ClInclude Include="UnderbellyShader.h" />

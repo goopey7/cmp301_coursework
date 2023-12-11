@@ -1,14 +1,7 @@
 Texture2D texture0 : register(t0);
 Texture2D texture1 : register(t1);
 Texture2D heightMap : register(t2);
-
-Texture2D depthMapTexture0 : register(t3);
-Texture2D depthMapTexture1 : register(t4);
-Texture2D depthMapTexture2 : register(t5);
-Texture2D depthMapTexture3 : register(t6);
-Texture2D depthMapTexture4 : register(t7);
-Texture2D depthMapTexture5 : register(t8);
-Texture2D depthMapTexture6 : register(t9);
+Texture2DArray depthMapTextures : register(t3);
 
 SamplerState sampler0 : register(s0);
 SamplerState shadowSampler : register(s1);
@@ -21,6 +14,9 @@ struct Light
     float4 ambientColor;
     float3 lightPosition;
     float attenuation;
+    uint shadowMapStart;
+    uint shadowMapEnd;
+    float2 padding;
 };
 
 cbuffer LightBuffer : register(b0)
@@ -73,9 +69,9 @@ bool hasDepthDataInMap(float2 uv)
     return uv.x >= 0.f && uv.x <= 1.f && uv.y >= 0.f && uv.y <= 1.f;
 }
 
-bool isInShadow(Texture2D sMap, float2 uv, float4 lightViewPosition, float bias)
+bool isInShadow(Texture2DArray sMap, uint index, float2 uv, float4 lightViewPosition, float bias)
 {
-    float depthValue = sMap.Sample(shadowSampler, uv).r;
+    float depthValue = sMap.Sample(shadowSampler, float3(uv, index)).r;
     float lightDepthValue = lightViewPosition.z / lightViewPosition.w;
     lightDepthValue -= bias;
 
@@ -136,10 +132,10 @@ float4 main(InputType input) : SV_TARGET
         Light light = lights[i];
         if (light.type == 0) // directional light
         {
-            float2 pTexCoord = getProjectiveCoords(input.lightViewPos[0]);
+            float2 pTexCoord = getProjectiveCoords(input.lightViewPos[light.shadowMapStart]);
             if (hasDepthDataInMap(pTexCoord))
             {
-                if (!isInShadow(depthMapTexture0, pTexCoord, input.lightViewPos[0], shadowMapBias))
+                if (!isInShadow(depthMapTextures, light.shadowMapStart, pTexCoord, input.lightViewPos[light.shadowMapStart], shadowMapBias))
                 {
                     dirLightColor += calculateLighting(-light.lightDirection, normal, light.diffuseColor);
                 }
@@ -148,19 +144,12 @@ float4 main(InputType input) : SV_TARGET
         else // point light
         {
             bool inShadow = false;
-            for (uint i = 1; i < 7; i++)
+            for (uint j = light.shadowMapStart; j < light.shadowMapEnd; j++)
             {
-                float2 pTexCoord = getProjectiveCoords(input.lightViewPos[i]);
+                float2 pTexCoord = getProjectiveCoords(input.lightViewPos[j]);
                 if (hasDepthDataInMap(pTexCoord))
                 {
-                    if (
-                        (i != 1 || (i == 1 && isInShadow(depthMapTexture1, pTexCoord, input.lightViewPos[i], shadowMapBias)))
-                        && (i != 2 || (i == 2 && isInShadow(depthMapTexture2, pTexCoord, input.lightViewPos[i], shadowMapBias)))
-                        && (i != 3 || (i == 3 && isInShadow(depthMapTexture3, pTexCoord, input.lightViewPos[i], shadowMapBias)))
-                        && (i != 4 || (i == 4 && isInShadow(depthMapTexture4, pTexCoord, input.lightViewPos[i], shadowMapBias)))
-                        && (i != 5 || (i == 5 && isInShadow(depthMapTexture5, pTexCoord, input.lightViewPos[i], shadowMapBias)))
-                        && (i != 6 || (i == 6 && isInShadow(depthMapTexture6, pTexCoord, input.lightViewPos[i], shadowMapBias)))
-                        )
+                    if (isInShadow(depthMapTextures, j, pTexCoord, input.lightViewPos[j], shadowMapBias))
                     {
                         inShadow = true;
                     }
