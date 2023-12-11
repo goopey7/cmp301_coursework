@@ -6,6 +6,7 @@
 #include "DXF.h"	// include dxframework
 #include "IslandShader.h"
 #include "WaterShader.h"
+#include "BoatShader.h"
 #include "colorShader.h"
 #include "TesselatedPlaneMesh.h"
 #include "TextureShader.h"
@@ -32,7 +33,7 @@ protected:
 	void depthPass();
 	void finalPass();
 	void gui();
-	void renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj);
+	void renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool depthPass);
 
 private:
 	TesselatedPlaneMesh* islandMesh;
@@ -41,6 +42,8 @@ private:
 	WaterShader* waterShader;
 	ColorShader* colorShader;
 	SphereMesh* shadowTestMesh;
+	AModel* boatModel;
+	BoatShader* boatShader;
 
 	std::vector<SphereMesh*> lightMeshes;
 
@@ -102,9 +105,12 @@ private:
 	float fieldOfView = (float)XM_PI / 4.0f;
 	float screenAspect = 1920.f / 1080.f;
 
-	// Create the projection matrix for 3D rendering.
 	XMMATRIX projectionMatrix;
 	LightManager* lm;
+
+	XMFLOAT3 boatPivot;
+	XMFLOAT3 boatPos;
+	XMFLOAT3 boatRot;
 };
 
 #endif

@@ -15,6 +15,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"waterColor", L"res/Water_001_COLOR.jpg");
 	textureMgr->loadTexture(L"waterNormal", L"res/Water_001_NORM.jpg");
 	textureMgr->loadTexture(L"waterHeight", L"res/Water_001_DISP.png");
+	textureMgr->loadTexture(L"boatColor", L"res/Mesh_Base_Color.PNG");
 
 	renderTexture = new RenderTexture(renderer->getDevice(), screenWidth, screenHeight, SCREEN_NEAR,
 									  SCREEN_DEPTH);
@@ -37,6 +38,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	underwaterSurfaceMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1000); 
+	boatModel = new AModel(renderer->getDevice(), "res/boat.obj");
+	boatShader = new BoatShader(renderer->getDevice(), hwnd);
 
 	camera->setPosition(0.f, 10.f, -10.f);
 
@@ -134,20 +137,44 @@ void App1::update(float dt)
 	camera->update();
 }
 
-void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj)
+void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool depthPass)
 {
-
 	auto ctx = renderer->getDeviceContext();
 
-	// render test sphere
-	renderer->setAlphaBlending(true);
-	world *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
-	shadowTestMesh->sendData(ctx);
-	//textureShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"stone"));
-	//textureShader->render(ctx, shadowTestMesh->getIndexCount());
-	colorShader->setShaderParameters(ctx, world, view, proj);
-	colorShader->render(ctx, shadowTestMesh->getIndexCount());
-	renderer->setAlphaBlending(false);
+	if ( depthPass )
+	{
+		// render test sphere
+		renderer->setAlphaBlending(true);
+		world *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
+		shadowTestMesh->sendData(ctx);
+		colorShader->setDepthShaderParamters(ctx, world, view, proj);
+		colorShader->renderDepth(ctx, shadowTestMesh->getIndexCount());
+		renderer->setAlphaBlending(false);
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixRotationRollPitchYaw(boatRot.x, boatRot.y, boatRot.z);
+		world *= XMMatrixTranslation(boatPos.x, boatPos.y, boatPos.z);
+		boatModel->sendData(ctx);
+		boatShader->setDepthShaderParamters(ctx, world, view, proj, elapsedTime, waterGravity, waves, boatPivot);
+		boatShader->renderDepth(ctx, boatModel->getIndexCount());
+	}
+	else
+	{
+		// render test sphere
+		renderer->setAlphaBlending(true);
+		world *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
+		shadowTestMesh->sendData(ctx);
+		colorShader->setShaderParameters(ctx, world, view, proj);
+		colorShader->render(ctx, shadowTestMesh->getIndexCount());
+		renderer->setAlphaBlending(false);
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixRotationRollPitchYaw(boatRot.x, boatRot.y, boatRot.z);
+		world *= XMMatrixTranslation(boatPos.x, boatPos.y, boatPos.z);
+		boatModel->sendData(ctx);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"boatColor"), elapsedTime, waterGravity, waves, boatPivot);
+		boatShader->render(ctx, boatModel->getIndexCount());
+	}
 }
 
 void App1::depthPass()
@@ -169,7 +196,7 @@ void App1::depthPass()
 			XMMATRIX lightProjMatrix = light->getOrthoMatrix();
 			XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
-			renderDepthObjects(worldMatrix, lightViewMatrix, lightProjMatrix);
+			renderDepthObjects(worldMatrix, lightViewMatrix, lightProjMatrix, true);
 
 			renderer->setBackBufferRenderTarget();
 			renderer->resetViewport();
@@ -185,7 +212,7 @@ void App1::depthPass()
 				XMMATRIX lightProjMatrix = light->getOrthoMatrix();
 				XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
-				renderDepthObjects(worldMatrix, lightViewMatrix, lightProjMatrix);
+				renderDepthObjects(worldMatrix, lightViewMatrix, lightProjMatrix, true);
 
 				renderer->setBackBufferRenderTarget();
 				renderer->resetViewport();
@@ -248,16 +275,12 @@ void App1::sceneToTexturePass()
 		}
 
 		// render shadow casters - this is done after the water so that the alpha blending is correct
-		renderDepthObjects(worldMatrix, viewMatrix, projectionMatrix);
+		renderDepthObjects(worldMatrix, viewMatrix, projectionMatrix, false);
 	}
 	else // underwater
 	{
 		// render shadow casters - this is done before the water so that the alpha blending is correct
-		renderDepthObjects(worldMatrix, viewMatrix, projectionMatrix);
-
-		colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
-		colorShader->render(ctx, shadowTestMesh->getIndexCount());
-		renderer->setAlphaBlending(false);
+		renderDepthObjects(worldMatrix, viewMatrix, projectionMatrix, false);
 		renderer->setFrontCulling(true);
 		renderer->setAlphaBlending(true);
 		worldMatrix = renderer->getWorldMatrix();
@@ -380,6 +403,12 @@ void App1::gui()
 	ImGui::Begin("Island");
 		ImGui::SliderFloat("IslandHeight", &islandHeight, 0.f, 100.f);
 		ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
+	ImGui::End();
+
+	ImGui::Begin("Boat");
+		ImGui::SliderFloat3("BoatPivot (what part reacts to waves)", (float*)&boatPivot, -1.f, 1.f);
+		ImGui::SliderFloat3("BoatPos", (float*)&boatPos, -20.f, 20.f);
+		ImGui::SliderFloat3("BoatRot", (float*)&boatRot, 0, XM_2PI);
 	ImGui::End();
 
 	ImGui::Begin("Water");

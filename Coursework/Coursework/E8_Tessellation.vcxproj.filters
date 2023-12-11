@@ -60,6 +60,9 @@
     <ClCompile Include="ShadowMapArray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BoatShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App1.h">
@@ -105,6 +108,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMapArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoatShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -153,6 +159,12 @@
     </FxCompile>
     <FxCompile Include="underwaterSurfacePS.hlsl">
       <Filter>Resource Files\Water</Filter>
+    </FxCompile>
+    <FxCompile Include="boatVS.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="boatPS.hlsl">
+      <Filter>Resource Files</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

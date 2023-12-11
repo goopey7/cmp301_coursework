@@ -189,7 +189,6 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	std::copy(waves.begin(), waves.begin() + min(waves.size(), 8), waterData->waves);
 	deviceContext->Unmap(waterBuffer, 0);
 	deviceContext->DSSetConstantBuffers(1, 1, &waterBuffer);
-	deviceContext->PSSetConstantBuffers(1, 1, &waterBuffer);
 
 	TesType* tesData;
 	result = deviceContext->Map(tesBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);

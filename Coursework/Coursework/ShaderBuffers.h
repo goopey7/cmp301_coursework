@@ -87,3 +87,9 @@ struct WaterPPBufferType
 	float padding;
 };
 
+struct BoatBufferType
+{
+	XMFLOAT3 boatPivot;
+	float padding;
+};
+
