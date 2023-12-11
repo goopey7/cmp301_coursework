@@ -7,14 +7,13 @@
 #include "IslandShader.h"
 #include "WaterShader.h"
 #include "colorShader.h"
-#include "Light.h"
 #include "TesselatedPlaneMesh.h"
-#include "PointLight.h"
-#include "DirectionLight.h"
 #include "TextureShader.h"
 #include "WaterPPShader.h"
 #include "UnderbellyShader.h"
 #include "UnderWaterSurfaceShader.h"
+
+#include "LightManager.h"
 
 class App1 : public BaseApplication
 {
@@ -43,7 +42,6 @@ private:
 	ColorShader* colorShader;
 	SphereMesh* shadowTestMesh;
 
-	std::vector<LightBase*> lights;
 	std::vector<SphereMesh*> lightMeshes;
 
 	// island variables
@@ -109,6 +107,9 @@ private:
 
 	XMFLOAT3 pointLightDirections[6] = {{1.f, 0.f, 0.f},  {-1.f, 0.f, 0.f}, {0.f, 1.f, 0.f},
 										{0.f, -1.f, 0.f}, {0.f, 0.f, 1.f},	{0.f, 0.f, -1.f}};
+
+	LightManager* lm;
+
 };
 
 #endif

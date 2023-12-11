@@ -9,11 +9,12 @@ public:
 	ShadowMap(ID3D11Device* device, int mWidth, int mHeight);
 	~ShadowMap();
 
-	void BindDsvAndSetNullRenderTarget(ID3D11DeviceContext* dc);
+	void BindDsvAndSetNullRenderTarget(ID3D11DeviceContext* dc, int index);
+	ID3D11DepthStencilView* getDSV(int index);
 	ID3D11ShaderResourceView* getDepthMapSRV() { return mDepthMapSRV; };
 
 private:
-	ID3D11DepthStencilView* mDepthMapDSV;
+	std::vector<ID3D11DepthStencilView*> mDepthMapDSV;
 	ID3D11ShaderResourceView* mDepthMapSRV;
 	D3D11_VIEWPORT viewport;
 	ID3D11RenderTargetView* renderTargets[1];

@@ -38,13 +38,9 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	underwaterSurfaceMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1000); 
 
-	PointLight* pointLight = new PointLight(renderer->getDevice(), 1024, 1024);
-	DirectionLight* dirLight = new DirectionLight(renderer->getDevice(), 1024, 1024);
-	dirLight->setDirection((XMFLOAT3)lightDir);
-	dirLight->setPosition((XMFLOAT3)dirLightPos);
-
-	lights.push_back(dirLight);
-	lights.push_back(pointLight);
+	lm = new LightManager(renderer->getDevice());
+	lm->addPointLight();
+	lm->addDirLight();
 
 	camera->setPosition(0.f, 10.f, -10.f);
 
@@ -66,6 +62,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	screenSize = { (float)screenWidth, (float)screenHeight };
 
 	projectionMatrix = XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, SCREEN_NEAR, SCREEN_DEPTH);
+
 }
 
 App1::~App1()
@@ -103,15 +100,6 @@ App1::~App1()
 		delete colorShader;
 		colorShader = 0;
 	}
-
-	for (auto light : lights)
-	{
-		if (light)
-		{
-			delete light;
-			light = 0;
-		}
-	}
 }
 
 bool App1::frame()
@@ -137,9 +125,9 @@ bool App1::frame()
 
 void App1::update(float dt)
 {
-	((DirectionLight*)lights[0])->setDirection(lightDir);
-	((DirectionLight*)lights[0])->setPosition(dirLightPos);
-	((PointLight*)lights[1])->setPosition(pointLightPos);
+	lm->getLight(1)->setDirection(lightDir);
+	lm->getLight(1)->setPosition(dirLightPos);
+	lm->getLight(0)->setPosition(pointLightPos);
 
 	elapsedTime += timer->getTime();
 
@@ -166,13 +154,16 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj)
 void App1::depthPass()
 {
 	auto ctx = renderer->getDeviceContext();
-	for (auto light : lights)
+	for (int i = 0; i < lm->getLights().size(); i++)
 	{
+		LightBase* light = lm->getLight(i);
+		auto shadowMaps = lm->getShadowMaps(i);
+
 		switch (light->getType())
 		{
 		case LightType::Directional:
-			// Set the render target to be the render to texture.
-			light->getShadowMap(0)->BindDsvAndSetNullRenderTarget(ctx);
+
+			lm->bindDsvAndSetNullRenderTarget(ctx, shadowMaps.first);
 
 			light->generateViewMatrix();
 			XMMATRIX lightViewMatrix = light->getViewMatrix();
@@ -185,11 +176,11 @@ void App1::depthPass()
 			renderer->resetViewport();
 			break;
 		case LightType::Point:
-			for (int i = 0; i < 6; i++)
+			for (int i = shadowMaps.first; i < shadowMaps.second; i++)
 			{
-				light->getShadowMap(i)->BindDsvAndSetNullRenderTarget(ctx);
+				lm->bindDsvAndSetNullRenderTarget(ctx, i);
 
-				light->setDirection(pointLightDirections[i]);
+				light->setDirection(pointLightDirections[(shadowMaps.second - 1) - shadowMaps.first]);
 
 				light->generateViewMatrix();
 				XMMATRIX lightViewMatrix = light->getViewMatrix();
@@ -225,10 +216,9 @@ void App1::sceneToTexturePass()
 	{
 		islandMesh->sendData(ctx, i);
 		islandShader->setShaderParameters(
-			ctx, worldMatrix, viewMatrix, projectionMatrix,
+			renderer->getDevice(), ctx, worldMatrix, viewMatrix, projectionMatrix,
 			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"),
-			lights[0]->getShadowMap(0)->getDepthMapSRV(),
-			lights, edges, inside, texRes, islandHeight
+			lm, edges, inside, texRes, islandHeight
 		);
 
 		islandShader->render(ctx, islandMesh->getIndexCount());
@@ -249,12 +239,12 @@ void App1::sceneToTexturePass()
 		worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 		for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
 		{
-			waterMesh->sendData(ctx, i);
-			waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges,
-											 inside, elapsedTime, waterGravity, waves, lights,
-											 lights[0]->getShadowMap(0)->getDepthMapSRV(), camera->getPosition(), textureMgr->getTexture(L"islandHeight"));
+			//waterMesh->sendData(ctx, i);
+			//waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges,
+			//								 inside, elapsedTime, waterGravity, waves, lm,
+			//								 camera->getPosition(), textureMgr->getTexture(L"islandHeight"));
 
-			waterShader->render(ctx, waterMesh->getIndexCount());
+			//waterShader->render(ctx, waterMesh->getIndexCount());
 		}
 
 		// render shadow casters - this is done after the water so that the alpha blending is correct
@@ -440,7 +430,7 @@ void App1::gui()
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");
-		ImGui::Image(lights[0]->getShadowMap(0)->getDepthMapSRV(), ImVec2(256, 256));
+		ImGui::Image(lm->getDepthMapSRV(), ImVec2(256, 256));
 		ImGui::SliderFloat3("TestMeshPos", (float*)&testMeshPos, -100.f, 100.f);
 	ImGui::End();
 

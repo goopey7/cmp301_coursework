@@ -136,10 +136,10 @@ void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_
 }
 
 void IslandShader::setShaderParameters(
-	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
+	ID3D11Device* device, ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1,
-	ID3D11ShaderResourceView* heightMap, ID3D11ShaderResourceView* depthMap,
-	const std::vector<LightBase*>& lights, float* edges, float* inside, float texRes, float height)
+	ID3D11ShaderResourceView* heightMap,
+	LightManager* lm, float* edges, float* inside, float texRes, float height)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -156,8 +156,8 @@ void IslandShader::setShaderParameters(
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	dataPtr->lightView = XMMatrixTranspose(lights[0]->getViewMatrix());
-	dataPtr->lightProjection = XMMatrixTranspose(lights[0]->getOrthoMatrix());
+	dataPtr->lightView = XMMatrixTranspose(lm->getLight(1)->getViewMatrix());
+	dataPtr->lightProjection = XMMatrixTranspose(lm->getLight(1)->getOrthoMatrix());
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -183,7 +183,7 @@ void IslandShader::setShaderParameters(
 	// Send light data to pixel shader
 
 	std::vector<LightBufferType> ldata;
-	for (auto& light : lights)
+	for (auto& light : lm->getLights())
 	{
 		ldata.push_back(light->getConstBuffer());
 	}
@@ -200,7 +200,10 @@ void IslandShader::setShaderParameters(
 	deviceContext->PSSetShaderResources(0, 1, &texture0);
 	deviceContext->PSSetShaderResources(1, 1, &texture1);
 	deviceContext->PSSetShaderResources(2, 1, &heightMap);
-	deviceContext->PSSetShaderResources(3, 1, &depthMap);
+
+	ID3D11ShaderResourceView* dmsrv = lm->getDepthMapSRV();
+	deviceContext->PSSetShaderResources(3, 1, &dmsrv);
+
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
 

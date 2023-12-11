@@ -21,6 +21,8 @@ struct Light
     float4 ambientColor;
     float3 lightPosition;
     float attenuation;
+    uint shadowMaps;
+    float3 padding;
 };
 
 cbuffer LightBuffer : register(b0)

@@ -183,6 +183,7 @@
     <ClInclude Include="DirectionLight.h" />
     <ClInclude Include="IslandShader.h" />
     <ClInclude Include="LightBase.h" />
+    <ClInclude Include="LightManager.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="ShaderBuffers.h" />
     <ClInclude Include="TesselatedPlaneMesh.h" />

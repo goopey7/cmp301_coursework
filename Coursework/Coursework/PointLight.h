@@ -3,5 +3,5 @@
 class PointLight : public LightBase
 {
   public:
-	PointLight(ID3D11Device* device, int width, int height);
+	PointLight(size_t shadowMapCount, size_t shadowMapIndex);
 };

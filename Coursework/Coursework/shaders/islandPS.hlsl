@@ -1,7 +1,7 @@
 Texture2D texture0 : register(t0);
 Texture2D texture1 : register(t1);
 Texture2D heightMap : register(t2);
-Texture2D depthMapTexture : register(t3);
+Texture2DArray depthMapTextures : register(t3);
 
 SamplerState sampler0 : register(s0);
 SamplerState shadowSampler : register(s1);
@@ -14,6 +14,8 @@ struct Light
     float4 ambientColor;
     float3 lightPosition;
     float attenuation;
+    uint shadowMaps;
+    float3 padding;
 };
 
 cbuffer LightBuffer : register(b0)
@@ -56,7 +58,7 @@ float3 calculateNormal(float2 texCoord, float sampleOffset)
     float left = heightMap.SampleLevel(sampler0, texCoord + float2(-sampleOffset, 0), 0).r;
     float right = heightMap.SampleLevel(sampler0, texCoord + float2(sampleOffset, 0), 0).r;
 
-    // 2 * sampleOffset seems to yield the best results, the normalization provides variation
+    // 1.5 * sampleOffset seems to yield the best results, the normalization provides variation
     // basically the larger the y value is, the more grass there will be, smaller will be more stone
     return normalize(float3(left - right, 1.5f * sampleOffset, down - up));
 }
@@ -66,9 +68,9 @@ bool hasDepthDataInMap(float2 uv)
     return uv.x >= 0.f && uv.x <= 1.f && uv.y >= 0.f && uv.y <= 1.f;
 }
 
-bool isInShadow(Texture2D sMap, float2 uv, float4 lightViewPosition, float bias)
+bool isInShadow(Texture2DArray sMap, float2 uv, float4 lightViewPosition, float bias)
 {
-    float depthValue = sMap.Sample(shadowSampler, uv).r;
+    float depthValue = sMap.Sample(shadowSampler, float3(uv, 6)).r;
     float lightDepthValue = lightViewPosition.z / lightViewPosition.w;
     lightDepthValue -= bias;
 
@@ -128,17 +130,17 @@ float4 main(InputType input) : SV_TARGET
     for (uint i = 0; i < numLights; i++)
     {
         Light light = lights[i];
-        if (light.type == 0)
+        if (light.type == 0) // directional light
         {
             if (hasDepthDataInMap(pTexCoord))
             {
-                if (!isInShadow(depthMapTexture, pTexCoord, input.lightViewPos, shadowMapBias))
+                if (!isInShadow(depthMapTextures, pTexCoord, input.lightViewPos, shadowMapBias))
                 {
                     dirLightColor += calculateLighting(-light.lightDirection, normal, light.diffuseColor);
                 }
             }
         }
-        else
+        else // point light
         {
             // divide by 2 because I want attenuation to represent the max distance from the center of the light
             float distance = length(light.lightPosition - input.worldPos) / 2.f;

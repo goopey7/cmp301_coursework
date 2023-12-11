@@ -136,7 +136,7 @@ void WaterShader::setShaderParameters(
 ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
 							 float* edges, float* inside, float time, float gravity, const std::vector<Wave>& waves,
-	const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap, XMFLOAT3 camPos, ID3D11ShaderResourceView* heightMap
+		LightManager* lm, XMFLOAT3 camPos, ID3D11ShaderResourceView* heightMap
 )
 {
 	HRESULT result;
@@ -154,8 +154,8 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	dataPtr->lightView = XMMatrixTranspose(lights[0]->getViewMatrix());
-	dataPtr->lightProjection = XMMatrixTranspose(lights[0]->getOrthoMatrix());
+	dataPtr->lightView = XMMatrixTranspose(lm->getLight(1)->getViewMatrix());
+	dataPtr->lightProjection = XMMatrixTranspose(lm->getLight(1)->getOrthoMatrix());
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -186,12 +186,12 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	deviceContext->DSSetConstantBuffers(2, 1, &camBuffer);
 
 	// Set shader texture resources
-	deviceContext->PSSetShaderResources(0, 1, &shadowMap);
+	//deviceContext->PSSetShaderResources(0, 1, &shadowMap);
 	deviceContext->PSSetShaderResources(1, 1, &heightMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 
 	std::vector<LightBufferType> ldata;
-	for (auto& light : lights)
+	for (auto& light : lm->getLights())
 	{
 		ldata.push_back(light->getConstBuffer());
 	}

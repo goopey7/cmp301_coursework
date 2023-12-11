@@ -12,6 +12,7 @@ enum LightType
 class LightBase
 {
   public:
+		LightBase(size_t shadowMapIndex, size_t shadowMapCount) : shadowMapIndex(shadowMapIndex), shadowMapCount(shadowMapCount) {}
 		operator Light*() { return &light; }
 		LightBufferType getConstBuffer()
 		{
@@ -41,10 +42,6 @@ class LightBase
 		{
 			return type;
 		}
-		ShadowMap* getShadowMap(int index)
-		{
-			return shadowMaps[index];
-		}
 		void setDirection(XMFLOAT3 direction)
 		{
 			light.setDirection(direction.x, direction.y, direction.z);
@@ -55,9 +52,13 @@ class LightBase
 		}
 		XMFLOAT3 getPosition() const { return light.getPosition(); }
 		XMFLOAT3 getDirection() const { return light.getDirection(); }
+		size_t getShadowMapCount() const { return shadowMapCount; }
+		size_t getShadowMapIndex() const { return shadowMapIndex; }
   protected:
 	  Light light;
 	  LightType type;
 	  float attenuation = FLT_MAX;
-	  std::vector<ShadowMap*> shadowMaps;
+	  size_t shadowMapCount;
+	  size_t shadowMapIndex;
 };
+

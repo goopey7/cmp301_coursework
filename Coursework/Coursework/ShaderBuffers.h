@@ -21,6 +21,8 @@ struct LightBufferType
 	XMFLOAT4 ambient;
 	XMFLOAT3 position;
 	float attenuation;
+	uint32_t shadowMaps;
+	XMFLOAT3 padding;
 };
 
 struct LightsBufferType

@@ -3,5 +3,5 @@
 class DirectionLight : public LightBase
 {
   public:
-	DirectionLight(ID3D11Device* device, int width, int height);
+	DirectionLight(size_t shadowMapIndex, size_t shadowMapCount);
 };
