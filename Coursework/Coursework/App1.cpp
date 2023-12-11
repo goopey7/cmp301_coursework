@@ -35,6 +35,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
+	underwaterSurfaceMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1000); 
 
 	PointLight* pointLight = new PointLight();
 	DirectionLight* dirLight = new DirectionLight();
@@ -203,6 +204,15 @@ void App1::sceneToTexturePass()
 	renderer->setFrontCulling(false);
 	worldMatrix = renderer->getWorldMatrix();
 
+	// render test sphere
+	worldMatrix = renderer->getWorldMatrix();
+	renderer->setAlphaBlending(true);
+	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
+	shadowTestMesh->sendData(ctx);
+	textureShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"stone"));
+	textureShader->render(ctx, shadowTestMesh->getIndexCount());
+	renderer->setAlphaBlending(false);
+
 	if (camera->getPosition().y > 0.6f)
 	{
 		worldMatrix = renderer->getWorldMatrix();
@@ -210,7 +220,6 @@ void App1::sceneToTexturePass()
 		for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
 		{
 			waterMesh->sendData(ctx, i);
-
 			waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges,
 											 inside, elapsedTime, waterGravity, waves, lights,
 											 shadowMap->getDepthMapSRV(), camera->getPosition());
@@ -218,15 +227,18 @@ void App1::sceneToTexturePass()
 			waterShader->render(ctx, waterMesh->getIndexCount());
 		}
 	}
-
-	// render test sphere
-	worldMatrix = renderer->getWorldMatrix();
-	renderer->setAlphaBlending(true);
-	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
-	shadowTestMesh->sendData(ctx);
-	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
-	colorShader->render(ctx, shadowTestMesh->getIndexCount());
-	renderer->setAlphaBlending(false);
+	else
+	{
+		renderer->setFrontCulling(true);
+		renderer->setAlphaBlending(true);
+		worldMatrix = renderer->getWorldMatrix();
+		worldMatrix *= XMMatrixTranslation(-500.f, 0.6f, -500.f);
+		underwaterSurfaceMesh->sendData(ctx);
+		colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
+		colorShader->render(ctx, underwaterSurfaceMesh->getIndexCount());
+		renderer->setAlphaBlending(false);
+		renderer->setFrontCulling(false);
+	}
 
 	// reset render target back to the swapchain back-buffer and not the render texture
 	renderer->setBackBufferRenderTarget();
@@ -249,16 +261,19 @@ void App1::finalPass()
 
 	if (camera->getPosition().y > 0.6f)
 	{
-		textureShader->setShaderParameters(ctx, worldMatrix, orthoViewMatrix, orthoMatrix,
-										   renderTexture->getShaderResourceView());
-		textureShader->render(ctx, orthoMesh->getIndexCount());
+		waterPPShader->setShaderParameters(ctx, worldMatrix, orthoViewMatrix, orthoMatrix,
+										   renderTexture->getShaderResourceView(), 0.f,
+										   0.f, 0.f, 0.f, {1.f, 1.f, 1.f}, underwaterWeights, 0.f,
+										   {clientSize.x, clientSize.y}
+			);
+		waterPPShader->render(ctx, orthoMesh->getIndexCount());
 	}
 	else
 	{
 		waterPPShader->setShaderParameters(ctx, worldMatrix, orthoViewMatrix, orthoMatrix,
 										   renderTexture->getShaderResourceView(), elapsedTime,
 										   underwaterFreq, underwaterSpeed, underwaterDisplacement,
-										   underwaterColor, underwaterWeights, blurAmount, screenSize
+										   underwaterColor, underwaterWeights, blurAmount, {clientSize.x, clientSize.y}
 			);
 		waterPPShader->render(ctx, orthoMesh->getIndexCount());
 	}
@@ -284,6 +299,7 @@ bool App1::render()
 
 	renderer->endScene();
 	ImGui::UpdatePlatformWindows();
+	ImGui::RenderPlatformWindowsDefault();
 	ImGui::EndFrame();
 
 	return true;
@@ -318,13 +334,12 @@ void App1::gui()
 	ImGui::BeginMainMenuBar();
 		ImGui::Text("%.2f FPS", timer->getFPS());
 		ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+		ImGui::DragFloat3("", (float*)&camera->getPosition(), -100.f, 100.f);
 	ImGui::EndMainMenuBar();
 
-	ImGui::Begin("Debug");
+	ImGui::Begin("Tesselation");
 		ImGui::SliderFloat4("Edges", edges, 1.f, 64.f);
 		ImGui::SliderFloat2("Inside", inside, 1.f, 64.f);
-		ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
-		ImGui::DragFloat3("CameraPos", (float*)&camera->getPosition(), -100.f, 100.f);
 	ImGui::End();
 
 	ImGui::Begin("Lighting");
@@ -335,6 +350,7 @@ void App1::gui()
 
 	ImGui::Begin("Island");
 		ImGui::SliderFloat("IslandHeight", &islandHeight, 0.f, 100.f);
+		ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
 	ImGui::End();
 
 	ImGui::Begin("Water");
@@ -392,8 +408,7 @@ void App1::gui()
 	ImGui::SetNextWindowBgAlpha(1.f);
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(clearColor.x, clearColor.y, clearColor.z, clearColor.w));
 	ImGui::Begin("Viewport", nullptr,
-				 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
-					 ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_HorizontalScrollbar);
+					 ImGuiWindowFlags_NoBackground);
 		ImVec2 max = ImGui::GetWindowContentRegionMax();
 		ImVec2 min = ImGui::GetWindowContentRegionMin();
 		max.x += ImGui::GetWindowPos().x;
@@ -415,6 +430,7 @@ void App1::gui()
 			FPCamera* oldCam = camera;
 			camera = new FPCamera(input, viewportSize.x, viewportSize.y, wnd);
 			camera->setPosition(oldCam->getPosition().x, oldCam->getPosition().y, oldCam->getPosition().z);
+			camera->setRotation(oldCam->getRotation().x, oldCam->getRotation().y, oldCam->getRotation().z);
 			camera->update();
 			delete oldCam;
 
