@@ -5,8 +5,8 @@ cbuffer MatrixBuffer : register(b0)
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
-    matrix lightViewMatrix;
-    matrix lightProjectionMatrix;
+    matrix lightViewMatrix[7];
+    matrix lightProjectionMatrix[7];
 };
 
 struct Wave
@@ -50,9 +50,9 @@ struct OutputType
     float height : COLOR;
 	float3 worldPos : TEXCOORD1;
     float4 depthPos : TEXCOORD2;
-    float4 lightViewPos : TEXCOORD3;
-    float3 worldNormal : TEXCOORD4;
-    float3 viewVector : TEXCOORD5;
+    float3 worldNormal : TEXCOORD3;
+    float3 viewVector : TEXCOORD4;
+    float4 lightViewPos[7] : TEXCOORD5;
 };
 
 float3 gerstnerWave(Wave wave, float3 pos, inout float3 tangent, inout float3 binormal)
@@ -122,9 +122,12 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 
     output.worldNormal = mul(float4(normal, 1.f), worldMatrix).xyz;
 
-    output.lightViewPos = mul(float4(vertexPosition, 1.0f), worldMatrix);
-    output.lightViewPos = mul(output.lightViewPos, lightViewMatrix);
-    output.lightViewPos = mul(output.lightViewPos, lightProjectionMatrix);
+    for (uint j = 0; j < 7; j++)
+    {
+        output.lightViewPos[j] = mul(float4(vertexPosition, 1.f), worldMatrix);
+        output.lightViewPos[j] = mul(output.lightViewPos[j], lightViewMatrix[j]);
+        output.lightViewPos[j] = mul(output.lightViewPos[j], lightProjectionMatrix[j]);
+    }
 
     //output.viewVector = normalize(cameraPos - output.worldPos);
 

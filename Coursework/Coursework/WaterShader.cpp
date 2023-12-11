@@ -154,8 +154,29 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	//dataPtr->lightView = XMMatrixTranspose(lm->getLight(1)->getViewMatrix());
-	//dataPtr->lightProjection = XMMatrixTranspose(lm->getLight(1)->getOrthoMatrix());
+	for (size_t i = 0; i < lm->getLights().size(); i++)
+	{
+		auto light = lm->getLight(i);
+		switch (light->getType())
+		{
+		case LightType::Directional:
+			dataPtr->lightViews[light->getShadowMapIndex()] = XMMatrixTranspose(light->getViewMatrix());
+			dataPtr->lightProjections[light->getShadowMapIndex()] = XMMatrixTranspose(light->getOrthoMatrix());
+			break;
+		case LightType::Point:
+		{
+			int dir = 0;
+			for (int j = light->getShadowMapIndex();
+				 j < light->getShadowMapIndex() + light->getShadowMapCount(); j++)
+			{
+				dataPtr->lightViews[j] = XMMatrixTranspose(light->getPointLightViewMatrix(dir));
+				dataPtr->lightProjections[j] = XMMatrixTranspose(light->getOrthoMatrix());
+				dir++;
+			}
+			break;
+		}
+		}
+	}
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->DSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -186,7 +207,8 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 	deviceContext->DSSetConstantBuffers(2, 1, &camBuffer);
 
 	// Set shader texture resources
-	//deviceContext->PSSetShaderResources(0, 1, &shadowMap);
+	ID3D11ShaderResourceView* shadowMaps = lm->getDepthMapSRV();
+	deviceContext->PSSetShaderResources(0, 1, &shadowMaps);
 	deviceContext->PSSetShaderResources(1, 1, &heightMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 

@@ -239,12 +239,12 @@ void App1::sceneToTexturePass()
 		worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 		for (size_t i = 0; i < waterMesh->getQuadrants(); i++)
 		{
-			//waterMesh->sendData(ctx, i);
-			//waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges,
-			//								 inside, elapsedTime, waterGravity, waves, lm,
-			//								 camera->getPosition(), textureMgr->getTexture(L"islandHeight"));
+			waterMesh->sendData(ctx, i);
+			waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges,
+											 inside, elapsedTime, waterGravity, waves, lm,
+											 camera->getPosition(), textureMgr->getTexture(L"islandHeight"));
 
-			//waterShader->render(ctx, waterMesh->getIndexCount());
+			waterShader->render(ctx, waterMesh->getIndexCount());
 		}
 
 		// render shadow casters - this is done after the water so that the alpha blending is correct
