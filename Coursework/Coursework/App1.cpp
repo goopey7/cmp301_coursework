@@ -38,15 +38,14 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	underwaterSurfaceMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1000); 
 
-	PointLight* pointLight = new PointLight();
-	DirectionLight* dirLight = new DirectionLight();
+	PointLight* pointLight = new PointLight(renderer->getDevice(), 1024, 1024);
+	DirectionLight* dirLight = new DirectionLight(renderer->getDevice(), 1024, 1024);
 	dirLight->setDirection((XMFLOAT3)lightDir);
 	dirLight->setPosition((XMFLOAT3)dirLightPos);
 
 	lights.push_back(dirLight);
 	lights.push_back(pointLight);
 
-	shadowMap = new ShadowMap(renderer->getDevice(), 1024 * 5, 1024 * 5);
 	camera->setPosition(0.f, 10.f, -10.f);
 
 	waves.push_back(Wave());
@@ -148,26 +147,65 @@ void App1::update(float dt)
 	camera->update();
 }
 
-void App1::depthPass()
+void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj)
 {
-	// Set the render target to be the render to texture.
-	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
-
-	lights[0]->generateViewMatrix();
-	XMMATRIX lightViewMatrix = lights[0]->getViewMatrix();
-	XMMATRIX lightProjMatrix = lights[0]->getOrthoMatrix();
-	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
 	auto ctx = renderer->getDeviceContext();
 
 	// render test sphere
-	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
+	renderer->setAlphaBlending(true);
+	world *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
 	shadowTestMesh->sendData(ctx);
-	colorShader->setDepthShaderParamters(ctx, worldMatrix, lightViewMatrix, lightProjMatrix);
-	colorShader->renderDepth(ctx, shadowTestMesh->getIndexCount());
+	//textureShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"stone"));
+	//textureShader->render(ctx, shadowTestMesh->getIndexCount());
+	colorShader->setShaderParameters(ctx, world, view, proj);
+	colorShader->render(ctx, shadowTestMesh->getIndexCount());
+	renderer->setAlphaBlending(false);
+}
 
-	renderer->setBackBufferRenderTarget();
-	renderer->resetViewport();
+void App1::depthPass()
+{
+	auto ctx = renderer->getDeviceContext();
+	for (auto light : lights)
+	{
+		switch (light->getType())
+		{
+		case LightType::Directional:
+			// Set the render target to be the render to texture.
+			light->getShadowMap(0)->BindDsvAndSetNullRenderTarget(ctx);
+
+			light->generateViewMatrix();
+			XMMATRIX lightViewMatrix = light->getViewMatrix();
+			XMMATRIX lightProjMatrix = light->getOrthoMatrix();
+			XMMATRIX worldMatrix = renderer->getWorldMatrix();
+
+			renderDepthObjects(worldMatrix, lightViewMatrix, lightProjMatrix);
+
+			renderer->setBackBufferRenderTarget();
+			renderer->resetViewport();
+			break;
+		case LightType::Point:
+			for (int i = 0; i < 6; i++)
+			{
+				light->getShadowMap(i)->BindDsvAndSetNullRenderTarget(ctx);
+
+				light->setDirection(pointLightDirections[i]);
+
+				light->generateViewMatrix();
+				XMMATRIX lightViewMatrix = light->getViewMatrix();
+				XMMATRIX lightProjMatrix = light->getOrthoMatrix();
+				XMMATRIX worldMatrix = renderer->getWorldMatrix();
+
+				renderDepthObjects(worldMatrix, lightViewMatrix, lightProjMatrix);
+
+				renderer->setBackBufferRenderTarget();
+				renderer->resetViewport();
+			}
+			break;
+		case LightType::Spot:
+				break;
+		}
+	}
 }
 
 void App1::sceneToTexturePass()
@@ -189,7 +227,7 @@ void App1::sceneToTexturePass()
 		islandShader->setShaderParameters(
 			ctx, worldMatrix, viewMatrix, projectionMatrix,
 			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"),
-			shadowMap->getDepthMapSRV(),
+			lights[0]->getShadowMap(0)->getDepthMapSRV(),
 			lights, edges, inside, texRes, islandHeight
 		);
 
@@ -205,18 +243,7 @@ void App1::sceneToTexturePass()
 	renderer->setFrontCulling(false);
 	worldMatrix = renderer->getWorldMatrix();
 
-	// render test sphere
-	worldMatrix = renderer->getWorldMatrix();
-	renderer->setAlphaBlending(true);
-	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
-	shadowTestMesh->sendData(ctx);
-	//textureShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"stone"));
-	//textureShader->render(ctx, shadowTestMesh->getIndexCount());
-	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
-	colorShader->render(ctx, shadowTestMesh->getIndexCount());
-	renderer->setAlphaBlending(false);
-
-	if (camera->getPosition().y > 0.6f)
+	if (camera->getPosition().y > 0.6f) // above water
 	{
 		worldMatrix = renderer->getWorldMatrix();
 		worldMatrix *= XMMatrixTranslation(0.f, 0.6f, 0.f);
@@ -225,13 +252,22 @@ void App1::sceneToTexturePass()
 			waterMesh->sendData(ctx, i);
 			waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges,
 											 inside, elapsedTime, waterGravity, waves, lights,
-											 shadowMap->getDepthMapSRV(), camera->getPosition(), textureMgr->getTexture(L"islandHeight"));
+											 lights[0]->getShadowMap(0)->getDepthMapSRV(), camera->getPosition(), textureMgr->getTexture(L"islandHeight"));
 
 			waterShader->render(ctx, waterMesh->getIndexCount());
 		}
+
+		// render shadow casters - this is done after the water so that the alpha blending is correct
+		renderDepthObjects(worldMatrix, viewMatrix, projectionMatrix);
 	}
-	else
+	else // underwater
 	{
+		// render shadow casters - this is done before the water so that the alpha blending is correct
+		renderDepthObjects(worldMatrix, viewMatrix, projectionMatrix);
+
+		colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
+		colorShader->render(ctx, shadowTestMesh->getIndexCount());
+		renderer->setAlphaBlending(false);
 		renderer->setFrontCulling(true);
 		renderer->setAlphaBlending(true);
 		worldMatrix = renderer->getWorldMatrix();
@@ -404,7 +440,7 @@ void App1::gui()
 	ImGui::End();
 
 	ImGui::Begin("ShadowMap");
-		ImGui::Image(shadowMap->getDepthMapSRV(), ImVec2(256, 256));
+		ImGui::Image(lights[0]->getShadowMap(0)->getDepthMapSRV(), ImVec2(256, 256));
 		ImGui::SliderFloat3("TestMeshPos", (float*)&testMeshPos, -100.f, 100.f);
 	ImGui::End();
 

@@ -33,6 +33,7 @@ protected:
 	void depthPass();
 	void finalPass();
 	void gui();
+	void renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj);
 
 private:
 	TesselatedPlaneMesh* islandMesh;
@@ -41,8 +42,6 @@ private:
 	WaterShader* waterShader;
 	ColorShader* colorShader;
 	SphereMesh* shadowTestMesh;
-
-	ShadowMap* shadowMap;
 
 	std::vector<LightBase*> lights;
 	std::vector<SphereMesh*> lightMeshes;
@@ -107,6 +106,9 @@ private:
 
 	// Create the projection matrix for 3D rendering.
 	XMMATRIX projectionMatrix;
+
+	XMFLOAT3 pointLightDirections[6] = {{1.f, 0.f, 0.f},  {-1.f, 0.f, 0.f}, {0.f, 1.f, 0.f},
+										{0.f, -1.f, 0.f}, {0.f, 0.f, 1.f},	{0.f, 0.f, -1.f}};
 };
 
 #endif

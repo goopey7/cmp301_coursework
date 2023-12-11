@@ -37,8 +37,27 @@ class LightBase
 		{
 			return light.getOrthoMatrix();
 		}
+		LightType getType()
+		{
+			return type;
+		}
+		ShadowMap* getShadowMap(int index)
+		{
+			return shadowMaps[index];
+		}
+		void setDirection(XMFLOAT3 direction)
+		{
+			light.setDirection(direction.x, direction.y, direction.z);
+		}
+		void setPosition(XMFLOAT3 pos)
+		{
+			light.setPosition(pos.x, pos.y, pos.z);
+		}
+		XMFLOAT3 getPosition() const { return light.getPosition(); }
+		XMFLOAT3 getDirection() const { return light.getDirection(); }
   protected:
 	  Light light;
 	  LightType type;
 	  float attenuation = FLT_MAX;
+	  std::vector<ShadowMap*> shadowMaps;
 };
