@@ -63,7 +63,7 @@ private:
 	float inside[2] = {32.f, 32.f};
 
 	// light variables
-	XMFLOAT3 lightDir = {1.f, -0.3f, 0.25f};
+	XMFLOAT3 lightDir = {-1.f, -0.35f, 0.511f};
 	XMFLOAT3 dirLightPos = { 27.f, 50.f, 21.f };
 	XMFLOAT3 pointLightPos = { 40.f, 7.f, 20.f };
 
@@ -112,13 +112,16 @@ private:
 	XMFLOAT3 boatPivot;
 	XMFLOAT3 boatPos = { -20.f, 0.6f, 7.826f };
 	XMFLOAT3 boatRot = { 0.f, 4.82f, 0.f };
-	XMFLOAT3 boatScale = { 0.5f, 0.5f, 0.5f };
+	XMFLOAT3 boatScale = { 0.6f, 0.6f, 0.6f };
 
 	int numDocks = 5;
 	XMFLOAT3 dockOffset = { -5.981f, 0.f, 0.f };
 	XMFLOAT3 dockPos = {3.47f, 0.87f, 0.f};
 	XMFLOAT3 dockRot = {0.f, XM_PIDIV2, 0.f};
 	XMFLOAT3 dockScale = { 2.f, 2.f, 2.f };
+
+	XMFLOAT3 camStartPos = {-20.85f, 2.11f, 7.921f};
+	XMFLOAT3 camStartRot = {3.f, -261.f, 0.f};
 };
 
 #endif

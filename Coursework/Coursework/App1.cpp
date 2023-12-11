@@ -43,7 +43,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	dockModel = new AModel(renderer->getDevice(), "res/dock.obj");
 	boatShader = new BoatShader(renderer->getDevice(), hwnd);
 
-	camera->setPosition(0.f, 10.f, -10.f);
+	camera->setPosition(camStartPos.x, camStartPos.y, camStartPos.z);
+	camera->setRotation(camStartRot.x, camStartRot.y, camStartRot.z);
 
 	waves.push_back(Wave());
 	waves[0].direction = { 1.f, 1.f };
