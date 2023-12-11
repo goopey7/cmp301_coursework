@@ -138,7 +138,7 @@ void IslandShader::initShader(const wchar_t* vs, const wchar_t* hs, const wchar_
 void IslandShader::setShaderParameters(
 	ID3D11Device* device, ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
 	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture0, ID3D11ShaderResourceView* texture1,
-	ID3D11ShaderResourceView* heightMap,
+	ID3D11ShaderResourceView* heightMap, ID3D11ShaderResourceView* shadowMap,
 	LightManager* lm, float* edges, float* inside, float texRes, float height)
 {
 	HRESULT result;
@@ -200,9 +200,7 @@ void IslandShader::setShaderParameters(
 	deviceContext->PSSetShaderResources(0, 1, &texture0);
 	deviceContext->PSSetShaderResources(1, 1, &texture1);
 	deviceContext->PSSetShaderResources(2, 1, &heightMap);
-
-	ID3D11ShaderResourceView* dmsrv = lm->getDepthMapSRV();
-	deviceContext->PSSetShaderResources(3, 1, &dmsrv);
+	deviceContext->PSSetShaderResources(3, 1, &shadowMap);
 
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);

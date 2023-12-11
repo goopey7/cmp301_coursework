@@ -38,10 +38,6 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	underwaterSurfaceMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1000); 
 
-	lm = new LightManager(renderer->getDevice());
-	lm->addPointLight();
-	lm->addDirLight();
-
 	camera->setPosition(0.f, 10.f, -10.f);
 
 	waves.push_back(Wave());
@@ -63,6 +59,9 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	projectionMatrix = XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, SCREEN_NEAR, SCREEN_DEPTH);
 
+	lm = new LightManager(renderer->getDevice());
+	lm->addDirLight();
+	lm->addPointLight();
 }
 
 App1::~App1()
@@ -217,7 +216,7 @@ void App1::sceneToTexturePass()
 		islandMesh->sendData(ctx, i);
 		islandShader->setShaderParameters(
 			renderer->getDevice(), ctx, worldMatrix, viewMatrix, projectionMatrix,
-			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"),
+			textureMgr->getTexture(L"grass"), textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"), lm->getDepthMapSRV(),
 			lm, edges, inside, texRes, islandHeight
 		);
 

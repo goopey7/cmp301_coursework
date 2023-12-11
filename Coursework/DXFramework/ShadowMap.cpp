@@ -9,7 +9,7 @@ ShadowMap::ShadowMap(ID3D11Device* device, int mWidth, int mHeight)
 	texDesc.Width = mWidth;
 	texDesc.Height = mHeight;
 	texDesc.MipLevels = 1;
-	texDesc.ArraySize = 32;
+	texDesc.ArraySize = 7;
 	texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 	texDesc.SampleDesc.Count = 1;
 	texDesc.SampleDesc.Quality = 0;
@@ -25,19 +25,19 @@ ShadowMap::ShadowMap(ID3D11Device* device, int mWidth, int mHeight)
 	dsvDesc.Flags = 0;
 	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Texture2DArray.ArraySize = 32;
+	dsvDesc.Texture2DArray.ArraySize = 7;
 	dsvDesc.Texture2DArray.MipSlice = 0;
-	mDepthMapDSV.resize(32);
-	for (int i=0; i<32; i++)
+	for (int i=0; i<7; i++)
 	{
+		mDepthMapDSV.push_back(0);
 		dsvDesc.Texture2DArray.FirstArraySlice = i;
-		device->CreateDepthStencilView(depthMap, &dsvDesc, &mDepthMapDSV[i]);
+		device->CreateDepthStencilView(depthMap, &dsvDesc, mDepthMapDSV.data() + i);
 	}
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2DArray.ArraySize = 32;
+	srvDesc.Texture2DArray.ArraySize = 7;
 	srvDesc.Texture2DArray.FirstArraySlice = 0;
 	srvDesc.Texture2DArray.MipLevels = texDesc.MipLevels;
 	srvDesc.Texture2DArray.MostDetailedMip = 0;
@@ -52,12 +52,12 @@ ShadowMap::ShadowMap(ID3D11Device* device, int mWidth, int mHeight)
 	viewport.TopLeftY = 0.0f;
 
 	//NULL render target
-	renderTargets[1] = { 0 };
+	renderTargets[1] = 0;
 }
 
 ShadowMap::~ShadowMap()
 {
-	for (int i=0; i<32; i++)
+	for (int i=0; i<7; i++)
 	{
 		delete mDepthMapDSV[i];
 	}
@@ -71,7 +71,7 @@ void ShadowMap::BindDsvAndSetNullRenderTarget(ID3D11DeviceContext* dc, int index
 	// Set null render target because we are only going to draw to depth buffer.
 	// Setting a null render target will disable color writes.
 	//ID3D11RenderTargetView* renderTargets[1] = { 0 };
-	dc->OMSetRenderTargets(1, nullptr, mDepthMapDSV[index]);
+	dc->OMSetRenderTargets(1, renderTargets, mDepthMapDSV[index]);
 
 	dc->ClearDepthStencilView(mDepthMapDSV[index], D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
