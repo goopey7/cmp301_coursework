@@ -1,6 +1,7 @@
 #pragma once
 #include "DXF.h"
 #include "ShaderBuffers.h"
+#include "LightManager.h"
 
 class BoatShader : public BaseShader
 {
@@ -9,7 +10,7 @@ public:
 	~BoatShader();
 
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
-	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, float time, float gravity, const std::vector<Wave>& waves, XMFLOAT3 boatPivot);
+	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, float time, float gravity, const std::vector<Wave>& waves, XMFLOAT3 boatPivot, LightManager* lm);
 	void setDepthShaderParamters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix,  float time, float gravity, const std::vector<Wave>& waves, XMFLOAT3 boatPivot);
 
 private:

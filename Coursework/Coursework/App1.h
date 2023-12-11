@@ -43,6 +43,7 @@ private:
 	ColorShader* colorShader;
 	SphereMesh* shadowTestMesh;
 	AModel* boatModel;
+	AModel* dockModel;
 	BoatShader* boatShader;
 
 	std::vector<SphereMesh*> lightMeshes;
@@ -109,8 +110,15 @@ private:
 	LightManager* lm;
 
 	XMFLOAT3 boatPivot;
-	XMFLOAT3 boatPos;
-	XMFLOAT3 boatRot;
+	XMFLOAT3 boatPos = { -20.f, 0.6f, 7.826f };
+	XMFLOAT3 boatRot = { 0.f, 4.82f, 0.f };
+	XMFLOAT3 boatScale = { 0.5f, 0.5f, 0.5f };
+
+	int numDocks = 5;
+	XMFLOAT3 dockOffset = { -5.981f, 0.f, 0.f };
+	XMFLOAT3 dockPos = {3.47f, 0.87f, 0.f};
+	XMFLOAT3 dockRot = {0.f, XM_PIDIV2, 0.f};
+	XMFLOAT3 dockScale = { 2.f, 2.f, 2.f };
 };
 
 #endif

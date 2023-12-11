@@ -28,6 +28,7 @@ TextureShader::~TextureShader()
 void TextureShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename, const wchar_t* dpsFilename)
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
+	D3D11_BUFFER_DESC lightBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
@@ -42,6 +43,16 @@ void TextureShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilen
 	matrixBufferDesc.MiscFlags = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
+
+
+	// Setup the description of the dynamic light constant buffer that is in the vertex shader.
+	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	lightBufferDesc.ByteWidth = sizeof(LightBufferType);
+	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	lightBufferDesc.MiscFlags = 0;
+	lightBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&lightBufferDesc, NULL, &lightBuffer);
 
 	D3D11_SAMPLER_DESC samplerDesc;
 
@@ -60,7 +71,7 @@ void TextureShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilen
 
 void TextureShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
-	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture)
+	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, LightManager* lm)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -79,6 +90,20 @@ void TextureShader::setShaderParameters(
 	dataPtr->projection = tproj;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
+
+
+	std::vector<LightBufferType> ldata;
+	for (auto& light : lm->getLights())
+	{
+		ldata.push_back(light->getConstBuffer());
+	}
+	LightsBufferType* lightsPtr;
+	result = deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	lightsPtr = (LightsBufferType*)mappedResource.pData;
+	std::move(ldata.begin(), ldata.begin() + min(ldata.size(), 8), lightsPtr->lights);
+	lightsPtr->lightCount = min(ldata.size(), 8);
+	deviceContext->Unmap(lightBuffer, 0);
+	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
 	deviceContext->PSSetShaderResources(0, 1, &texture);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);

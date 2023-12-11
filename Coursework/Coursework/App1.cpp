@@ -16,6 +16,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"waterNormal", L"res/Water_001_NORM.jpg");
 	textureMgr->loadTexture(L"waterHeight", L"res/Water_001_DISP.png");
 	textureMgr->loadTexture(L"boatColor", L"res/Mesh_Base_Color.PNG");
+	textureMgr->loadTexture(L"dockColor", L"res/wood.png");
 
 	renderTexture = new RenderTexture(renderer->getDevice(), screenWidth, screenHeight, SCREEN_NEAR,
 									  SCREEN_DEPTH);
@@ -39,6 +40,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	underwaterSurfaceMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1000); 
 	boatModel = new AModel(renderer->getDevice(), "res/boat.obj");
+	dockModel = new AModel(renderer->getDevice(), "res/dock.obj");
 	boatShader = new BoatShader(renderer->getDevice(), hwnd);
 
 	camera->setPosition(0.f, 10.f, -10.f);
@@ -152,11 +154,25 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		renderer->setAlphaBlending(false);
 
 		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(boatScale.x, boatScale.y, boatScale.z);
 		world *= XMMatrixRotationRollPitchYaw(boatRot.x, boatRot.y, boatRot.z);
 		world *= XMMatrixTranslation(boatPos.x, boatPos.y, boatPos.z);
 		boatModel->sendData(ctx);
 		boatShader->setDepthShaderParamters(ctx, world, view, proj, elapsedTime, waterGravity, waves, boatPivot);
 		boatShader->renderDepth(ctx, boatModel->getIndexCount());
+
+		for (int i=0; i<numDocks; i++)
+		{
+			world = renderer->getWorldMatrix();
+			XMFLOAT3 pos = {dockPos.x + i * dockOffset.x, dockPos.y + i * dockOffset.y, dockPos.z + i * dockOffset.z};
+			world *= XMMatrixScaling(dockScale.x, dockScale.y, dockScale.z);
+			world *= XMMatrixRotationRollPitchYaw(dockRot.x, dockRot.y, dockRot.z);
+			world *= XMMatrixTranslation(pos.x, pos.y, pos.z);
+			dockModel->sendData(ctx);
+			textureShader->setDepthShaderParamters(ctx, world, view, proj);
+			textureShader->renderDepth(ctx, dockModel->getIndexCount());
+		}
+
 	}
 	else
 	{
@@ -164,16 +180,31 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		renderer->setAlphaBlending(true);
 		world *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
 		shadowTestMesh->sendData(ctx);
-		colorShader->setShaderParameters(ctx, world, view, proj);
+		colorShader->setShaderParameters(ctx, world, view, proj, lm);
 		colorShader->render(ctx, shadowTestMesh->getIndexCount());
 		renderer->setAlphaBlending(false);
 
 		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(boatScale.x, boatScale.y, boatScale.z);
 		world *= XMMatrixRotationRollPitchYaw(boatRot.x, boatRot.y, boatRot.z);
 		world *= XMMatrixTranslation(boatPos.x, boatPos.y, boatPos.z);
 		boatModel->sendData(ctx);
-		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"boatColor"), elapsedTime, waterGravity, waves, boatPivot);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"boatColor"), elapsedTime, waterGravity, waves, boatPivot, lm);
 		boatShader->render(ctx, boatModel->getIndexCount());
+
+		for (int i = 0; i < numDocks; i++)
+		{
+			world = renderer->getWorldMatrix();
+			XMFLOAT3 pos = {dockPos.x + i * dockOffset.x, dockPos.y + i * dockOffset.y,
+							dockPos.z + i * dockOffset.z};
+			world *= XMMatrixScaling(dockScale.x, dockScale.y, dockScale.z);
+			world *= XMMatrixRotationRollPitchYaw(dockRot.x, dockRot.y, dockRot.z);
+			world *= XMMatrixTranslation(pos.x, pos.y, pos.z);
+			dockModel->sendData(ctx);
+			textureShader->setShaderParameters(ctx, world, view, proj,
+											   textureMgr->getTexture(L"dockColor"), lm);
+			textureShader->render(ctx, dockModel->getIndexCount());
+		}
 	}
 }
 
@@ -409,6 +440,15 @@ void App1::gui()
 		ImGui::SliderFloat3("BoatPivot (what part reacts to waves)", (float*)&boatPivot, -1.f, 1.f);
 		ImGui::SliderFloat3("BoatPos", (float*)&boatPos, -20.f, 20.f);
 		ImGui::SliderFloat3("BoatRot", (float*)&boatRot, 0, XM_2PI);
+		ImGui::SliderFloat3("BoatScale", (float*)&boatScale, 0.f, 1.f);
+	ImGui::End();
+
+	ImGui::Begin("Dock");
+		ImGui::SliderInt("NumDocks", &numDocks, 0, 10);
+		ImGui::SliderFloat3("DockPos", (float*)&dockPos, -20.f, 20.f);
+		ImGui::SliderFloat3("DockRot", (float*)&dockRot, 0, XM_2PI);
+		ImGui::SliderFloat3("DockScale", (float*)&dockScale, 1.f, 5.f);
+		ImGui::SliderFloat3("DockOffset", (float*)&dockOffset, -10.f, 10.f);
 	ImGui::End();
 
 	ImGui::Begin("Water");

@@ -46,7 +46,7 @@ void ColorShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilenam
 
 void ColorShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
-	const XMMATRIX& projectionMatrix)
+	const XMMATRIX& projectionMatrix, LightManager* lm)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;

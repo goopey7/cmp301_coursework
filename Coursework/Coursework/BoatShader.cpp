@@ -81,7 +81,9 @@ void BoatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename
 
 void BoatShader::setShaderParameters(
 	ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix,
-	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, float time, float gravity, const std::vector<Wave>& waves, XMFLOAT3 boatPivot)
+	const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture, float time, float gravity, const std::vector<Wave>& waves, XMFLOAT3 boatPivot,
+	LightManager* lm
+	)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
