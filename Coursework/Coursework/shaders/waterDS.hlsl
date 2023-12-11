@@ -5,8 +5,8 @@ cbuffer MatrixBuffer : register(b0)
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
-    matrix lightViewMatrix[7];
-    matrix lightProjectionMatrix[7];
+    matrix lightViewMatrix[26];
+    matrix lightProjectionMatrix[26];
 };
 
 struct Wave
@@ -52,7 +52,7 @@ struct OutputType
     float4 depthPos : TEXCOORD2;
     float3 worldNormal : TEXCOORD3;
     float3 viewVector : TEXCOORD4;
-    float4 lightViewPos[7] : TEXCOORD5;
+    float4 lightViewPos[26] : TEXCOORD5;
 };
 
 float3 gerstnerWave(Wave wave, float3 pos, inout float3 tangent, inout float3 binormal)
@@ -122,7 +122,7 @@ OutputType main(ConstantOutputType input, float2 uvwCoord : SV_DomainLocation, c
 
     output.worldNormal = mul(float4(normal, 1.f), worldMatrix).xyz;
 
-    for (uint j = 0; j < 7; j++)
+    for (uint j = 0; j < 26; j++)
     {
         output.lightViewPos[j] = mul(float4(vertexPosition, 1.f), worldMatrix);
         output.lightViewPos[j] = mul(output.lightViewPos[j], lightViewMatrix[j]);

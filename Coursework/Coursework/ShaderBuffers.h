@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DXF.h"
+#include "ShadowMapArray.h"
 using namespace std;
 using namespace DirectX;
 
@@ -9,8 +10,8 @@ struct ShadowMatrixBufferType
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
-	XMMATRIX lightViews[7];
-	XMMATRIX lightProjections[7];
+	XMMATRIX lightViews[MAX_SHADOW_MAPS];
+	XMMATRIX lightProjections[MAX_SHADOW_MAPS];
 };
 
 struct LightBufferType

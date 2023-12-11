@@ -40,7 +40,7 @@ struct InputType
     float height : COLOR;
 	float3 worldPos : TEXCOORD1;
     float4 depthPos : TEXCOORD2;
-    float4 lightViewPos[7] : TEXCOORD3;
+    float4 lightViewPos[26] : TEXCOORD3;
 };
 
 float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)

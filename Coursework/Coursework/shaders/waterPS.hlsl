@@ -10,7 +10,7 @@ struct InputType
     float4 depthPos : TEXCOORD2;
     float3 worldNormal : TEXCOORD3;
     float3 viewVector : TEXCOORD4;
-    float4 lightViewPos[7] : TEXCOORD5;
+    float4 lightViewPos[26] : TEXCOORD5;
 };
 
 struct Light
@@ -52,12 +52,7 @@ float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
 
 bool hasDepthDataInMap(float2 uv)
 {
-    //return uv.x >= 0.f && uv.x <= 1.f && uv.y >= 0.f && uv.y <= 1.f;
-    if (uv.x < 0.f || uv.x > 1.f || uv.y < 0.f || uv.y > 1.f)
-    {
-        return false;
-    }
-    return true;
+    return uv.x >= 0.f && uv.x <= 1.f && uv.y >= 0.f && uv.y <= 1.f;
 }
 
 bool isInShadow(Texture2DArray sMap, uint index, float2 uv, float4 lightViewPosition, float bias)

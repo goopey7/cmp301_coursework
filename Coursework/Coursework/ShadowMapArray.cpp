@@ -9,7 +9,7 @@ ShadowMapArray::ShadowMapArray(ID3D11Device* device, int mWidth, int mHeight)
 	texDesc.Width = mWidth;
 	texDesc.Height = mHeight;
 	texDesc.MipLevels = 1;
-	texDesc.ArraySize = 7;
+	texDesc.ArraySize = MAX_SHADOW_MAPS;
 	texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 	texDesc.SampleDesc.Count = 1;
 	texDesc.SampleDesc.Quality = 0;
@@ -21,7 +21,7 @@ ShadowMapArray::ShadowMapArray(ID3D11Device* device, int mWidth, int mHeight)
 	// ID3D11Texture2D* depthMap = 0;
 	device->CreateTexture2D(&texDesc, 0, &depthMaps);
 
-	for (size_t i = 0; i < 7; i++)
+	for (size_t i = 0; i < MAX_SHADOW_MAPS; i++)
 	{
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 		dsvDesc.Flags = 0;
@@ -39,7 +39,7 @@ ShadowMapArray::ShadowMapArray(ID3D11Device* device, int mWidth, int mHeight)
 	srvDesc.Texture2DArray.MipLevels = texDesc.MipLevels;
 	srvDesc.Texture2DArray.MostDetailedMip = 0;
 	srvDesc.Texture2DArray.FirstArraySlice = 0;
-	srvDesc.Texture2DArray.ArraySize = 7;
+	srvDesc.Texture2DArray.ArraySize = MAX_SHADOW_MAPS;
 	device->CreateShaderResourceView(depthMaps, &srvDesc, &mDepthMapArraySRV);
 
 	// Setup the viewport for rendering.

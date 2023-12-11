@@ -3,6 +3,8 @@
 
 using namespace DirectX;
 
+#define MAX_SHADOW_MAPS 26
+
 class ShadowMapArray
 {
   public:
@@ -14,7 +16,7 @@ class ShadowMapArray
 
   private:
 	ID3D11Texture2D* depthMaps;
-	ID3D11DepthStencilView* mDepthMapDSVs[7];
+	ID3D11DepthStencilView* mDepthMapDSVs[MAX_SHADOW_MAPS];
 	ID3D11ShaderResourceView* mDepthMapArraySRV;
 	D3D11_VIEWPORT viewport;
 	ID3D11RenderTargetView* renderTargets[1];
