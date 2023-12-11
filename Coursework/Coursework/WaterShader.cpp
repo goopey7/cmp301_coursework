@@ -136,7 +136,7 @@ void WaterShader::setShaderParameters(
 ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 							 const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix,
 							 float* edges, float* inside, float time, float gravity, const std::vector<Wave>& waves,
-	const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap, XMFLOAT3 camPos
+	const std::vector<LightBase*>& lights, ID3D11ShaderResourceView* shadowMap, XMFLOAT3 camPos, ID3D11ShaderResourceView* heightMap
 )
 {
 	HRESULT result;
@@ -187,6 +187,7 @@ ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix,
 
 	// Set shader texture resources
 	deviceContext->PSSetShaderResources(0, 1, &shadowMap);
+	deviceContext->PSSetShaderResources(1, 1, &heightMap);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 
 	std::vector<LightBufferType> ldata;

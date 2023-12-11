@@ -173,6 +173,7 @@
     <ClCompile Include="TesselatedPlaneMesh.cpp" />
     <ClCompile Include="TextureShader.cpp" />
     <ClCompile Include="UnderbellyShader.cpp" />
+    <ClCompile Include="UnderWaterSurfaceShader.cpp" />
     <ClCompile Include="WaterPPShader.cpp" />
     <ClCompile Include="WaterShader.cpp" />
   </ItemGroup>
@@ -187,6 +188,7 @@
     <ClInclude Include="TesselatedPlaneMesh.h" />
     <ClInclude Include="TextureShader.h" />
     <ClInclude Include="UnderbellyShader.h" />
+    <ClInclude Include="UnderWaterSurfaceShader.h" />
     <ClInclude Include="WaterPPShader.h" />
     <ClInclude Include="WaterShader.h" />
   </ItemGroup>
@@ -255,6 +257,10 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="texturePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="underwaterSurfacePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>

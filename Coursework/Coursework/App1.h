@@ -14,6 +14,7 @@
 #include "TextureShader.h"
 #include "WaterPPShader.h"
 #include "UnderbellyShader.h"
+#include "UnderWaterSurfaceShader.h"
 
 class App1 : public BaseApplication
 {
@@ -79,9 +80,9 @@ private:
 	WaterPPShader* waterPPShader;
 
 	float underwaterFreq = 120.f;
-	float underwaterSpeed = 2.75f;
+	float underwaterSpeed = 10.f;
 	float underwaterDisplacement = 0.004272f;
-	XMFLOAT3 underwaterColor = { 0.1f, 0.275f, 1.f };
+	XMFLOAT3 underwaterColor = { 0.1f, 0.275f, 0.5f };
 
     float underwaterWeights[5] = { 0.38298f, 0.241732f, 0.060598f, 0.005977f, 0.000229f };
 	float blurAmount = 3.f;
@@ -92,6 +93,7 @@ private:
 	UnderbellyShader* underbellyShader;
 	XMVECTOR underbellyPos = { 0.f, .6f, -50.f };
 	PlaneMesh* underwaterSurfaceMesh;
+	UnderwaterSurfaceShader* underwaterSurfaceShader;
 
 	RenderTexture* finalRenderTexture;
 	XMFLOAT4 clearColor = { 0.39f, 0.58, 0.92f, 1.f };

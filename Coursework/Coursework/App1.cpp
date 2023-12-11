@@ -25,6 +25,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth, screenHeight, 0, 0);
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
 	waterPPShader = new WaterPPShader(renderer->getDevice(), hwnd);
+	underwaterSurfaceShader = new UnderwaterSurfaceShader(renderer->getDevice(), hwnd);
 
 	// Create Mesh object and shader object
 	islandMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 2.f, 0.f, 0.f, 100.f, 100.f);
@@ -209,8 +210,10 @@ void App1::sceneToTexturePass()
 	renderer->setAlphaBlending(true);
 	worldMatrix *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
 	shadowTestMesh->sendData(ctx);
-	textureShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"stone"));
-	textureShader->render(ctx, shadowTestMesh->getIndexCount());
+	//textureShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"stone"));
+	//textureShader->render(ctx, shadowTestMesh->getIndexCount());
+	colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
+	colorShader->render(ctx, shadowTestMesh->getIndexCount());
 	renderer->setAlphaBlending(false);
 
 	if (camera->getPosition().y > 0.6f)
@@ -222,7 +225,7 @@ void App1::sceneToTexturePass()
 			waterMesh->sendData(ctx, i);
 			waterShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, edges,
 											 inside, elapsedTime, waterGravity, waves, lights,
-											 shadowMap->getDepthMapSRV(), camera->getPosition());
+											 shadowMap->getDepthMapSRV(), camera->getPosition(), textureMgr->getTexture(L"islandHeight"));
 
 			waterShader->render(ctx, waterMesh->getIndexCount());
 		}
@@ -234,8 +237,8 @@ void App1::sceneToTexturePass()
 		worldMatrix = renderer->getWorldMatrix();
 		worldMatrix *= XMMatrixTranslation(-500.f, 0.6f, -500.f);
 		underwaterSurfaceMesh->sendData(ctx);
-		colorShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix);
-		colorShader->render(ctx, underwaterSurfaceMesh->getIndexCount());
+		underwaterSurfaceShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"waterColor"));
+		underwaterSurfaceShader->render(ctx, underwaterSurfaceMesh->getIndexCount());
 		renderer->setAlphaBlending(false);
 		renderer->setFrontCulling(false);
 	}
@@ -387,7 +390,7 @@ void App1::gui()
 		ImGui::Separator();
 		ImGui::Text("Wavy distortion");
 			ImGui::SliderFloat("UnderwaterFreq", &underwaterFreq, 0.f, 250.f);
-			ImGui::SliderFloat("UnderwaterSpeed", &underwaterSpeed, 0.f, 5.f);
+			ImGui::SliderFloat("UnderwaterSpeed", &underwaterSpeed, 0.f, 20.f);
 			ImGui::SliderFloat("UnderwaterDisplacement", &underwaterDisplacement, 0.f, 0.01f, "%.6f");
 		ImGui::Separator();
 		ImGui::Text("Blur");
