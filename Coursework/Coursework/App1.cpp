@@ -13,7 +13,10 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"islandHeight", L"res/Wizard.tif");
 	textureMgr->loadTexture(L"waterColor", L"res/Water_001_COLOR.jpg");
 	textureMgr->loadTexture(L"boatColor", L"res/Mesh_Base_Color.PNG");
+	textureMgr->loadTexture(L"boatNorm", L"res/Mesh_Normal.PNG");
 	textureMgr->loadTexture(L"dockColor", L"res/wood.png");
+	textureMgr->loadTexture(L"barrelColor", L"res/barrel.png");
+	textureMgr->loadTexture(L"barrelNorm", L"res/barrelNorm.png");
 
 	renderTexture = new RenderTexture(renderer->getDevice(), screenWidth, screenHeight, SCREEN_NEAR,
 									  SCREEN_DEPTH);
@@ -34,13 +37,13 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	waterMesh = new TesselatedPlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 32.f, -250.f, -250.f, 500.f, 500.f);
 	waterShader = new WaterShader(renderer->getDevice(), hwnd);
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
-	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	underwaterSurfaceMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1000); 
 	boatShader = new BoatShader(renderer->getDevice(), hwnd);
 	boatModel = new AModel(renderer->getDevice(), "res/boat.obj");
 	dockModel = new AModel(renderer->getDevice(), "res/dock.obj");
 	lampBase = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
 	lampHead = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
+	barrelModel = new AModel(renderer->getDevice(), "res/barrel.obj");
 
 	camera->setPosition(camStartPos.x, camStartPos.y, camStartPos.z);
 	camera->setRotation(camStartRot.x, camStartRot.y, camStartRot.z);
@@ -149,14 +152,6 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 
 	if ( depthPass )
 	{
-		// render test sphere
-		renderer->setAlphaBlending(true);
-		world *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
-		shadowTestMesh->sendData(ctx);
-		colorShader->setDepthShaderParamters(ctx, world, view, proj);
-		colorShader->renderDepth(ctx, shadowTestMesh->getIndexCount());
-		renderer->setAlphaBlending(false);
-
 		world = renderer->getWorldMatrix();
 		world *= XMMatrixScaling(boatScale.x, boatScale.y, boatScale.z);
 		world *= XMMatrixRotationRollPitchYaw(boatRot.x, boatRot.y, boatRot.z);
@@ -164,6 +159,22 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		boatModel->sendData(ctx);
 		boatShader->setDepthShaderParamters(ctx, world, view, proj, elapsedTime, waterGravity, waves, boatPivot);
 		boatShader->renderDepth(ctx, boatModel->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(barrelScale.x, barrelScale.y, barrelScale.z);
+		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
+		world *= XMMatrixTranslation(barrelPos.x, barrelPos.y, barrelPos.z);
+		barrelModel->sendData(ctx);
+		boatShader->setDepthShaderParamters(ctx, world, view, proj, 0.f, waterGravity, waves, boatPivot);
+		boatShader->renderDepth(ctx, barrelModel->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(barrelScale.x, barrelScale.y, barrelScale.z);
+		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
+		world *= XMMatrixTranslation(0.f, 0.6f, 0.f);
+		barrelModel->sendData(ctx);
+		boatShader->setDepthShaderParamters(ctx, world, view, proj, elapsedTime, waterGravity, waves, boatPivot);
+		boatShader->renderDepth(ctx, barrelModel->getIndexCount());
 
 		for (int i=0; i<numDocks; i++)
 		{
@@ -197,20 +208,29 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 	else
 	{
 		// render test sphere
-		renderer->setAlphaBlending(true);
-		world *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
-		shadowTestMesh->sendData(ctx);
-		colorShader->setShaderParameters(ctx, world, view, proj, lm, {0.f, 1.f, 0.f, 0.1f});
-		colorShader->render(ctx, shadowTestMesh->getIndexCount());
-		renderer->setAlphaBlending(false);
-
 		world = renderer->getWorldMatrix();
 		world *= XMMatrixScaling(boatScale.x, boatScale.y, boatScale.z);
 		world *= XMMatrixRotationRollPitchYaw(boatRot.x, boatRot.y, boatRot.z);
 		world *= XMMatrixTranslation(boatPos.x, boatPos.y, boatPos.z);
 		boatModel->sendData(ctx);
-		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"boatColor"), elapsedTime, waterGravity, waves, boatPivot, lm);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"boatColor"), textureMgr->getTexture(L"boatNorm"), elapsedTime, waterGravity, waves, boatPivot, lm);
 		boatShader->render(ctx, boatModel->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(barrelScale.x, barrelScale.y, barrelScale.z);
+		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
+		world *= XMMatrixTranslation(0.f, 0.6f, 0.f);
+		barrelModel->sendData(ctx);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"barrelColor"), textureMgr->getTexture(L"barrelNorm"), elapsedTime, waterGravity, waves, boatPivot, lm);
+		boatShader->render(ctx, barrelModel->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(barrelScale.x, barrelScale.y, barrelScale.z);
+		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
+		world *= XMMatrixTranslation(barrelPos.x, barrelPos.y, barrelPos.z);
+		barrelModel->sendData(ctx);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"barrelColor"), textureMgr->getTexture(L"barrelNorm"), 0.f, waterGravity, waves, boatPivot, lm);
+		boatShader->render(ctx, barrelModel->getIndexCount());
 
 		for (int i = 0; i < numDocks; i++)
 		{
@@ -342,6 +362,7 @@ void App1::sceneToTexturePass()
 
 	renderer->setFrontCulling(true);
 	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix *= XMMatrixTranslation(islandPos.x, islandPos.y, islandPos.z);
 	worldMatrix *= XMMatrixTranslationFromVector(underbellyPos);
 	islandUnderbellyMesh->sendData(ctx);
 	underbellyShader->setShaderParameters(ctx, worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"stone"), textureMgr->getTexture(L"islandHeight"));
@@ -500,6 +521,12 @@ void App1::gui()
 		ImGui::SliderFloat3("BoatPos", (float*)&boatPos, -20.f, 20.f);
 		ImGui::SliderFloat3("BoatRot", (float*)&boatRot, 0, XM_2PI);
 		ImGui::SliderFloat3("BoatScale", (float*)&boatScale, 0.f, 1.f);
+	ImGui::End();
+
+	ImGui::Begin("Barrel");
+		ImGui::SliderFloat3("BarrelPos", (float*)&barrelPos, -20.f, 20.f);
+		ImGui::SliderFloat3("BarrelRot", (float*)&barrelRot, 0, XM_2PI);
+		ImGui::SliderFloat3("BarrelScale", (float*)&barrelScale, 0.f, 1.f);
 	ImGui::End();
 
 	ImGui::Begin("Dock");
