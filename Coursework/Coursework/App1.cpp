@@ -175,6 +175,15 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		world = renderer->getWorldMatrix();
 		world *= XMMatrixScaling(barrelScale.x, barrelScale.y, barrelScale.z);
 		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
+		world *= XMMatrixTranslation(barrelPos.x, barrelPos.y, barrelPos.z);
+		world *= XMMatrixTranslation(0.f, 0.f, -lampPartnerOffset.z);
+		barrelModel->sendData(ctx);
+		boatShader->setDepthShaderParamters(ctx, world, view, proj, 0.f, waterGravity, waves, boatPivot);
+		boatShader->renderDepth(ctx, barrelModel->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(barrelScale.x, barrelScale.y, barrelScale.z);
+		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
 		world *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 		barrelModel->sendData(ctx);
 		boatShader->setDepthShaderParamters(ctx, world, view, proj, elapsedTime, waterGravity, waves, boatPivot);
@@ -226,6 +235,15 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		world *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 		barrelModel->sendData(ctx);
 		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"barrelColor"), elapsedTime, waterGravity, waves, boatPivot, lm);
+		boatShader->render(ctx, barrelModel->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(barrelScale.x, barrelScale.y, barrelScale.z);
+		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
+		world *= XMMatrixTranslation(barrelPos.x, barrelPos.y, barrelPos.z);
+		world *= XMMatrixTranslation(0.f, 0.f, -lampPartnerOffset.z);
+		barrelModel->sendData(ctx);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"barrelColor"), 0.f, waterGravity, waves, boatPivot, lm);
 		boatShader->render(ctx, barrelModel->getIndexCount());
 
 		world = renderer->getWorldMatrix();
@@ -528,7 +546,7 @@ void App1::gui()
 	ImGui::End();
 
 	ImGui::Begin("Barrel");
-		ImGui::SliderFloat3("BarrelPos", (float*)&barrelPos, -20.f, 20.f);
+		ImGui::SliderFloat3("BarrelPos", (float*)&barrelPos, -40.f, 40.f);
 		ImGui::SliderFloat3("BarrelRot", (float*)&barrelRot, 0, XM_2PI);
 		ImGui::SliderFloat3("BarrelScale", (float*)&barrelScale, 0.f, 1.f);
 	ImGui::End();

@@ -117,7 +117,7 @@ private:
 	XMFLOAT3 boatScale = { 0.6f, 0.6f, 0.6f };
 
 	XMFLOAT3 barrelPivot;
-	XMFLOAT3 barrelPos = { 28.f, 3.07f, -3.f};
+	XMFLOAT3 barrelPos = {23.235f, 2.4f, -8.f};
 	XMFLOAT3 barrelRot = { 0.f, 4.82f, 0.f };
 	XMFLOAT3 barrelScale = { 0.6f, 0.6f, 0.6f };
 
