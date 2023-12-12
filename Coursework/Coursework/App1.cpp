@@ -71,6 +71,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	lm->addDirLight();
 	lm->addPointLight();
 	lm->addPointLight();
+	lm->addPointLight();
 }
 
 App1::~App1()
@@ -139,6 +140,9 @@ void App1::update(float dt)
 	lm->getLight(1)->setColor(lampColor);
 	lm->getLight(2)->setPosition({lampPos.x + lampHeadOffset.x + lampPartnerOffset.x, lampPos.y + lampHeadOffset.y + lampPartnerOffset.y, lampPos.z + lampHeadOffset.z + lampPartnerOffset.z});
 	lm->getLight(2)->setColor(lampColor);
+
+	lm->getLight(3)->setColor(lampColor);
+	lm->getLight(3)->setPosition(pointLightPos);
 
 	elapsedTime += timer->getTime();
 
@@ -213,7 +217,7 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		world *= XMMatrixRotationRollPitchYaw(boatRot.x, boatRot.y, boatRot.z);
 		world *= XMMatrixTranslation(boatPos.x, boatPos.y, boatPos.z);
 		boatModel->sendData(ctx);
-		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"boatColor"), textureMgr->getTexture(L"boatNorm"), elapsedTime, waterGravity, waves, boatPivot, lm);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"boatColor"), elapsedTime, waterGravity, waves, boatPivot, lm);
 		boatShader->render(ctx, boatModel->getIndexCount());
 
 		world = renderer->getWorldMatrix();
@@ -221,7 +225,7 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
 		world *= XMMatrixTranslation(0.f, 0.6f, 0.f);
 		barrelModel->sendData(ctx);
-		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"barrelColor"), textureMgr->getTexture(L"barrelNorm"), elapsedTime, waterGravity, waves, boatPivot, lm);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"barrelColor"), elapsedTime, waterGravity, waves, boatPivot, lm);
 		boatShader->render(ctx, barrelModel->getIndexCount());
 
 		world = renderer->getWorldMatrix();
@@ -229,7 +233,7 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		world *= XMMatrixRotationRollPitchYaw(barrelRot.x, barrelRot.y, barrelRot.z);
 		world *= XMMatrixTranslation(barrelPos.x, barrelPos.y, barrelPos.z);
 		barrelModel->sendData(ctx);
-		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"barrelColor"), textureMgr->getTexture(L"barrelNorm"), 0.f, waterGravity, waves, boatPivot, lm);
+		boatShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"barrelColor"), 0.f, waterGravity, waves, boatPivot, lm);
 		boatShader->render(ctx, barrelModel->getIndexCount());
 
 		for (int i = 0; i < numDocks; i++)
