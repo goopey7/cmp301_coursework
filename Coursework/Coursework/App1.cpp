@@ -13,10 +13,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	textureMgr->loadTexture(L"islandHeight", L"res/Wizard.tif");
 	textureMgr->loadTexture(L"waterColor", L"res/Water_001_COLOR.jpg");
 	textureMgr->loadTexture(L"boatColor", L"res/Mesh_Base_Color.PNG");
-	textureMgr->loadTexture(L"boatNorm", L"res/Mesh_Normal.PNG");
 	textureMgr->loadTexture(L"dockColor", L"res/wood.png");
 	textureMgr->loadTexture(L"barrelColor", L"res/barrel.png");
-	textureMgr->loadTexture(L"barrelNorm", L"res/barrelNorm.png");
 
 	renderTexture = new RenderTexture(renderer->getDevice(), screenWidth, screenHeight, SCREEN_NEAR,
 									  SCREEN_DEPTH);
@@ -618,7 +616,6 @@ void App1::gui()
 
 	ImGui::Begin("ShadowMap");
 		ImGui::Image(lm->getDepthMapSRV(), ImVec2(256, 256));
-		ImGui::SliderFloat3("TestMeshPos", (float*)&testMeshPos, -100.f, 100.f);
 	ImGui::End();
 
 	ImGui::SetNextWindowBgAlpha(1.f);

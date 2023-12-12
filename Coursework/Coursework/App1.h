@@ -69,9 +69,6 @@ private:
 	XMFLOAT3 dirLightPos = { -48.4f, 4.f, 0.5f };
 	XMFLOAT3 pointLightPos = { 40.f, 7.f, 20.f };
 
-	// shadow test variables
-	XMFLOAT3 testMeshPos = { 27.f, 9.f, 21.f };
-
 	float elapsedTime = 0.f;
 
 	std::vector<Wave> waves;
