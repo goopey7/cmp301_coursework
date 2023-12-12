@@ -9,7 +9,7 @@ class LightManager
 public:
 	LightManager(ID3D11Device* device) : device(device)
 	{
-		shadowMaps = new ShadowMapArray(device, 2048, 2048);
+		shadowMaps = new ShadowMapArray(device, 2048 * 2, 2048 * 2);
 	}
 
 	~LightManager()

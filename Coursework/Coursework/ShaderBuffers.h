@@ -93,3 +93,8 @@ struct BoatBufferType
 	float padding;
 };
 
+struct ColorBufferType
+{
+	XMFLOAT4 color;
+};
+

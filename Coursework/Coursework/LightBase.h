@@ -12,7 +12,10 @@ enum LightType
 class LightBase
 {
   public:
-		LightBase(size_t shadowMapIndex, size_t shadowMapCount) : shadowMapIndex(shadowMapIndex), shadowMapCount(shadowMapCount) {}
+		LightBase(size_t shadowMapIndex, size_t shadowMapCount) : shadowMapIndex(shadowMapIndex), shadowMapCount(shadowMapCount)
+		{
+			light.generateOrthoMatrix(200.f, 200.f, 0.1f, 100.f);
+		}
 		operator Light*() { return &light; }
 		LightBufferType getConstBuffer()
 		{
@@ -65,6 +68,10 @@ class LightBase
 			light.setDirection(d.x, d.y, d.z);
 			light.generateViewMatrix();
 			return light.getViewMatrix();
+		}
+		void setColor(XMFLOAT4 color)
+		{
+			light.setDiffuseColour(color.x, color.y, color.z, color.w);
 		}
   protected:
 	  Light light;

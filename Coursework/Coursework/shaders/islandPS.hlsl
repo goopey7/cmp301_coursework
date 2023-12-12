@@ -140,6 +140,10 @@ float4 main(InputType input) : SV_TARGET
                     dirLightColor += calculateLighting(-light.lightDirection, normal, light.diffuseColor);
                 }
             }
+            else
+            {
+                dirLightColor += calculateLighting(-light.lightDirection, normal, light.diffuseColor);
+            }
         }
         else // point light
         {

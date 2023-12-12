@@ -8,7 +8,7 @@ public:
 	ColorShader(ID3D11Device* device, HWND hwnd);
 	~ColorShader();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, LightManager* lm);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, LightManager* lm, XMFLOAT4 color);
 	void setDepthShaderParamters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix);
 
 private:
@@ -17,4 +17,5 @@ private:
 
 private:
 	ID3D11Buffer * matrixBuffer;
+	ID3D11Buffer * colorBuffer;
 };

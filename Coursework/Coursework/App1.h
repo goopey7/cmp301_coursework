@@ -44,6 +44,8 @@ private:
 	SphereMesh* shadowTestMesh;
 	AModel* boatModel;
 	AModel* dockModel;
+	CubeMesh* lampBase;
+	SphereMesh* lampHead;
 	BoatShader* boatShader;
 
 	std::vector<SphereMesh*> lightMeshes;
@@ -63,8 +65,8 @@ private:
 	float inside[2] = {32.f, 32.f};
 
 	// light variables
-	XMFLOAT3 lightDir = {-1.f, -0.35f, 0.511f};
-	XMFLOAT3 dirLightPos = { 27.f, 50.f, 21.f };
+	XMFLOAT3 lightDir = {0.475f, -0.383f, 0.511f};
+	XMFLOAT3 dirLightPos = { -48.4f, 4.f, 0.5f };
 	XMFLOAT3 pointLightPos = { 40.f, 7.f, 20.f };
 
 	// shadow test variables
@@ -110,18 +112,28 @@ private:
 	LightManager* lm;
 
 	XMFLOAT3 boatPivot;
-	XMFLOAT3 boatPos = { -20.f, 0.6f, 7.826f };
+	XMFLOAT3 boatPos = { 0.f, 0.6f, 0.f};
 	XMFLOAT3 boatRot = { 0.f, 4.82f, 0.f };
 	XMFLOAT3 boatScale = { 0.6f, 0.6f, 0.6f };
 
 	int numDocks = 5;
 	XMFLOAT3 dockOffset = { -5.981f, 0.f, 0.f };
-	XMFLOAT3 dockPos = {3.47f, 0.87f, 0.f};
+	XMFLOAT3 dockPos = {3.47f + 20.f, 0.87f, -6.5f};
 	XMFLOAT3 dockRot = {0.f, XM_PIDIV2, 0.f};
 	XMFLOAT3 dockScale = { 2.f, 2.f, 2.f };
 
-	XMFLOAT3 camStartPos = {-20.85f, 2.11f, 7.921f};
+	XMFLOAT3 lampHeadOffset = { 0.f, 0.8f, 0.f };
+	XMFLOAT3 lampHeadScale = { 0.3f, 0.3f, 0.3f };
+	XMFLOAT3 lampPos = {6.02f + 20.f, 2.55f, 1.6f - 6.5f};
+	XMFLOAT3 lampRot;
+	XMFLOAT3 lampBaseScale = { 0.15f, 0.5f, 0.15f };
+	XMFLOAT4 lampColor = { 1.f, 1.f, 0.8f, 1.f };
+	XMFLOAT3 lampPartnerOffset = {0.f, 0.f, -3.18f};
+
+	XMFLOAT3 camStartPos = {-20.85f + 20.f, 2.11f, 0.f};
 	XMFLOAT3 camStartRot = {3.f, -261.f, 0.f};
+
+	XMFLOAT3 islandPos = { 20.f, 0.f, 0.f };
 };
 
 #endif

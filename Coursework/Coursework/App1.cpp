@@ -10,11 +10,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	textureMgr->loadTexture(L"stone", L"res/stone.jpg");
 	textureMgr->loadTexture(L"grass", L"res/grass.jpg");
-	textureMgr->loadTexture(L"island", L"res/Wizard.tif");
 	textureMgr->loadTexture(L"islandHeight", L"res/Wizard.tif");
 	textureMgr->loadTexture(L"waterColor", L"res/Water_001_COLOR.jpg");
-	textureMgr->loadTexture(L"waterNormal", L"res/Water_001_NORM.jpg");
-	textureMgr->loadTexture(L"waterHeight", L"res/Water_001_DISP.png");
 	textureMgr->loadTexture(L"boatColor", L"res/Mesh_Base_Color.PNG");
 	textureMgr->loadTexture(L"dockColor", L"res/wood.png");
 
@@ -39,9 +36,11 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	colorShader = new ColorShader(renderer->getDevice(), hwnd);
 	shadowTestMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	underwaterSurfaceMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext(), 1000); 
+	boatShader = new BoatShader(renderer->getDevice(), hwnd);
 	boatModel = new AModel(renderer->getDevice(), "res/boat.obj");
 	dockModel = new AModel(renderer->getDevice(), "res/dock.obj");
-	boatShader = new BoatShader(renderer->getDevice(), hwnd);
+	lampBase = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
+	lampHead = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 
 	camera->setPosition(camStartPos.x, camStartPos.y, camStartPos.z);
 	camera->setRotation(camStartRot.x, camStartRot.y, camStartRot.z);
@@ -67,6 +66,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	lm = new LightManager(renderer->getDevice());
 	lm->addDirLight();
+	lm->addPointLight();
 	lm->addPointLight();
 }
 
@@ -132,7 +132,10 @@ void App1::update(float dt)
 {
 	lm->getLight(0)->setDirection(lightDir);
 	lm->getLight(0)->setPosition(dirLightPos);
-	lm->getLight(1)->setPosition(pointLightPos);
+	lm->getLight(1)->setPosition({lampPos.x + lampHeadOffset.x, lampPos.y + lampHeadOffset.y, lampPos.z + lampHeadOffset.z});
+	lm->getLight(1)->setColor(lampColor);
+	lm->getLight(2)->setPosition({lampPos.x + lampHeadOffset.x + lampPartnerOffset.x, lampPos.y + lampHeadOffset.y + lampPartnerOffset.y, lampPos.z + lampHeadOffset.z + lampPartnerOffset.z});
+	lm->getLight(2)->setColor(lampColor);
 
 	elapsedTime += timer->getTime();
 
@@ -174,6 +177,22 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 			textureShader->renderDepth(ctx, dockModel->getIndexCount());
 		}
 
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(lampBaseScale.x, lampBaseScale.y, lampBaseScale.z);
+		world *= XMMatrixRotationRollPitchYaw(lampRot.x, lampRot.y, lampRot.z);
+		world *= XMMatrixTranslation(lampPos.x, lampPos.y, lampPos.z);
+		lampBase->sendData(ctx);
+		textureShader->setDepthShaderParamters(ctx, world, view, proj);
+		textureShader->renderDepth(ctx, lampBase->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(lampBaseScale.x, lampBaseScale.y, lampBaseScale.z);
+		world *= XMMatrixRotationRollPitchYaw(lampRot.x, lampRot.y, lampRot.z);
+		world *= XMMatrixTranslation(lampPartnerOffset.x, lampPartnerOffset.y, lampPartnerOffset.z);
+		world *= XMMatrixTranslation(lampPos.x, lampPos.y, lampPos.z);
+		lampBase->sendData(ctx);
+		textureShader->setDepthShaderParamters(ctx, world, view, proj);
+		textureShader->renderDepth(ctx, lampBase->getIndexCount());
 	}
 	else
 	{
@@ -181,7 +200,7 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 		renderer->setAlphaBlending(true);
 		world *= XMMatrixTranslation(testMeshPos.x, testMeshPos.y, testMeshPos.z);
 		shadowTestMesh->sendData(ctx);
-		colorShader->setShaderParameters(ctx, world, view, proj, lm);
+		colorShader->setShaderParameters(ctx, world, view, proj, lm, {0.f, 1.f, 0.f, 0.1f});
 		colorShader->render(ctx, shadowTestMesh->getIndexCount());
 		renderer->setAlphaBlending(false);
 
@@ -206,6 +225,43 @@ void App1::renderDepthObjects(XMMATRIX world, XMMATRIX view, XMMATRIX proj, bool
 											   textureMgr->getTexture(L"dockColor"), lm);
 			textureShader->render(ctx, dockModel->getIndexCount());
 		}
+
+		world = renderer->getWorldMatrix();
+		lampHead->sendData(ctx);
+		world *= XMMatrixScaling(lampHeadScale.x, lampHeadScale.y, lampHeadScale.z);
+		world *= XMMatrixRotationRollPitchYaw(lampRot.x, lampRot.y, lampRot.z);
+		world *= XMMatrixTranslation(lampPartnerOffset.x, lampPartnerOffset.y, lampPartnerOffset.z);
+		world *= XMMatrixTranslation(lampPos.x, lampPos.y, lampPos.z);
+		world *= XMMatrixTranslation(lampHeadOffset.x, lampHeadOffset.y, lampHeadOffset.z);
+		colorShader->setShaderParameters(ctx, world, view, proj, lm, lampColor);
+		colorShader->render(ctx, lampHead->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(lampBaseScale.x, lampBaseScale.y, lampBaseScale.z);
+		world *= XMMatrixRotationRollPitchYaw(lampRot.x, lampRot.y, lampRot.z);
+		world *= XMMatrixTranslation(lampPartnerOffset.x, lampPartnerOffset.y, lampPartnerOffset.z);
+		world *= XMMatrixTranslation(lampPos.x, lampPos.y, lampPos.z);
+		lampBase->sendData(ctx);
+		textureShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"dockColor"), lm);
+		textureShader->render(ctx, lampBase->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		lampHead->sendData(ctx);
+		world *= XMMatrixScaling(lampHeadScale.x, lampHeadScale.y, lampHeadScale.z);
+		world *= XMMatrixRotationRollPitchYaw(lampRot.x, lampRot.y, lampRot.z);
+		world *= XMMatrixTranslation(lampPos.x, lampPos.y, lampPos.z);
+		world *= XMMatrixTranslation(lampHeadOffset.x, lampHeadOffset.y, lampHeadOffset.z);
+		colorShader->setShaderParameters(ctx, world, view, proj, lm, lampColor);
+		colorShader->render(ctx, lampHead->getIndexCount());
+
+		world = renderer->getWorldMatrix();
+		world *= XMMatrixScaling(lampBaseScale.x, lampBaseScale.y, lampBaseScale.z);
+		world *= XMMatrixRotationRollPitchYaw(lampRot.x, lampRot.y, lampRot.z);
+		world *= XMMatrixTranslation(lampPos.x, lampPos.y, lampPos.z);
+		lampBase->sendData(ctx);
+		textureShader->setShaderParameters(ctx, world, view, proj, textureMgr->getTexture(L"dockColor"), lm);
+		textureShader->render(ctx, lampBase->getIndexCount());
+
 	}
 }
 
@@ -265,6 +321,7 @@ void App1::sceneToTexturePass()
 	// Get the world, view, projection, and ortho matrices from the camera and
 	// Direct3D objects.
 	worldMatrix = renderer->getWorldMatrix();
+	worldMatrix *= XMMatrixTranslation(islandPos.x,	islandPos.y, islandPos.z);
 	viewMatrix = camera->getViewMatrix();
 
 	auto ctx = renderer->getDeviceContext();
@@ -434,6 +491,7 @@ void App1::gui()
 
 	ImGui::Begin("Island");
 		ImGui::SliderFloat("IslandHeight", &islandHeight, 0.f, 100.f);
+		ImGui::SliderFloat3("IslandPos", (float*)&islandPos, -20.f, 20.f);
 		ImGui::SliderFloat("TextureRes", &texRes, 1.f, 500.f);
 	ImGui::End();
 
@@ -450,6 +508,16 @@ void App1::gui()
 		ImGui::SliderFloat3("DockRot", (float*)&dockRot, 0, XM_2PI);
 		ImGui::SliderFloat3("DockScale", (float*)&dockScale, 1.f, 5.f);
 		ImGui::SliderFloat3("DockOffset", (float*)&dockOffset, -10.f, 10.f);
+	ImGui::End();
+
+	ImGui::Begin("Lamp");
+		ImGui::SliderFloat3("LampHeadScale", (float*)&lampHeadScale, 1.f, 5.f);
+		ImGui::SliderFloat3("LampHeadOffset", (float*)&lampHeadOffset, -5.f, 5.f);
+		ImGui::SliderFloat3("LampPos", (float*)&lampPos, -20.f, 20.f);
+		ImGui::SliderFloat3("LampRot", (float*)&lampRot, 0, XM_2PI);
+		ImGui::SliderFloat3("LampScale", (float*)&lampBaseScale, 1.f, 5.f);
+		ImGui::SliderFloat4("LampColor", (float*)&lampColor, 0.f, 1.f);
+		ImGui::SliderFloat3("LampPartnerOffset", (float*)&lampPartnerOffset, -7.f, 7.f);
 	ImGui::End();
 
 	ImGui::Begin("Water");
