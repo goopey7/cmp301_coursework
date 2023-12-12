@@ -31,6 +31,7 @@ void BoatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_BUFFER_DESC waterBufferDesc;
 	D3D11_BUFFER_DESC boatBufferDesc;
+	D3D11_BUFFER_DESC lightBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
@@ -39,7 +40,7 @@ void BoatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename
 
 	// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
 	matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	matrixBufferDesc.ByteWidth = sizeof(MatrixBufferType);
+	matrixBufferDesc.ByteWidth = sizeof(ShadowMatrixBufferType);
 	matrixBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	matrixBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	matrixBufferDesc.MiscFlags = 0;
@@ -64,6 +65,22 @@ void BoatShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename
 	boatBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&boatBufferDesc, NULL, &boatBuffer);
 
+	// Setup light buffer
+	// Setup the description of the light dynamic constant buffer that is in the pixel shader.
+	// Note that ByteWidth always needs to be a multiple of 16 if using D3D11_BIND_CONSTANT_BUFFER
+	// or CreateBuffer will fail.
+	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	lightBufferDesc.ByteWidth = sizeof(LightBufferType) * 8 + sizeof(uint32_t) * 4;
+	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	lightBufferDesc.MiscFlags = 0;
+	lightBufferDesc.StructureByteStride = 0;
+	HRESULT result = renderer->CreateBuffer(&lightBufferDesc, NULL, &lightBuffer);
+	if (FAILED(result))
+	{
+		throw std::runtime_error("Failed to create light buffer");
+	}
+
 	D3D11_SAMPLER_DESC samplerDesc;
 
 	// Create a texture sampler state description.
@@ -87,7 +104,7 @@ void BoatShader::setShaderParameters(
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	MatrixBufferType* dataPtr;
+	ShadowMatrixBufferType* dataPtr;
 
 	XMMATRIX tworld, tview, tproj;
 
@@ -96,10 +113,35 @@ void BoatShader::setShaderParameters(
 	tview = XMMatrixTranspose(viewMatrix);
 	tproj = XMMatrixTranspose(projectionMatrix);
 	result = deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	dataPtr = (MatrixBufferType*)mappedResource.pData;
+	dataPtr = (ShadowMatrixBufferType*)mappedResource.pData;
 	dataPtr->world = tworld; // worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
+
+	for (size_t i = 0; i < lm->getLights().size(); i++)
+	{
+		auto light = lm->getLight(i);
+		switch (light->getType())
+		{
+		case LightType::Directional:
+			dataPtr->lightViews[light->getShadowMapIndex()] = XMMatrixTranspose(light->getViewMatrix());
+			dataPtr->lightProjections[light->getShadowMapIndex()] = XMMatrixTranspose(light->getOrthoMatrix());
+			break;
+		case LightType::Point:
+		{
+			int dir = 0;
+			for (int j = light->getShadowMapIndex();
+				 j < light->getShadowMapIndex() + light->getShadowMapCount(); j++)
+			{
+				dataPtr->lightViews[j] = XMMatrixTranspose(light->getPointLightViewMatrix(dir));
+				dataPtr->lightProjections[j] = XMMatrixTranspose(light->getOrthoMatrix());
+				dir++;
+			}
+			break;
+		}
+		}
+	}
+
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -120,7 +162,22 @@ void BoatShader::setShaderParameters(
 	deviceContext->Unmap(boatBuffer, 0);
 	deviceContext->VSSetConstantBuffers(2, 1, &boatBuffer);
 
+	std::vector<LightBufferType> ldata;
+	for (auto& light : lm->getLights())
+	{
+		ldata.push_back(light->getConstBuffer());
+	}
+	LightsBufferType* lightsPtr;
+	result = deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	lightsPtr = (LightsBufferType*)mappedResource.pData;
+	std::move(ldata.begin(), ldata.begin() + min(ldata.size(), 8), lightsPtr->lights);
+	lightsPtr->lightCount = min(ldata.size(), 8);
+	deviceContext->Unmap(lightBuffer, 0);
+	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
+
+	ID3D11ShaderResourceView* sMaps = lm->getDepthMapSRV();
 	deviceContext->PSSetShaderResources(0, 1, &texture);
+	deviceContext->PSSetShaderResources(1, 1, &sMaps);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 }
 

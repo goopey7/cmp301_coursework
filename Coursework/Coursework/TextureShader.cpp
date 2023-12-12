@@ -136,8 +136,6 @@ void TextureShader::setShaderParameters(
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
 	deviceContext->PSSetShaderResources(0, 1, &texture);
-	ID3D11ShaderResourceView* sMaps = lm->getDepthMapSRV();
-	deviceContext->PSSetShaderResources(1, 1, &sMaps);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 }
 

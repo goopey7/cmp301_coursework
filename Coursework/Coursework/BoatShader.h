@@ -19,6 +19,7 @@ private:
 
 private:
 	ID3D11Buffer * matrixBuffer;
+	ID3D11Buffer * lightBuffer;
 	ID3D11Buffer* waterBuffer;
 	ID3D11Buffer* boatBuffer;
 	ID3D11SamplerState* sampleState;
